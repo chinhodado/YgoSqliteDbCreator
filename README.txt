@@ -1,0 +1,1 @@
+A tool to dump the Yugioh Wikia to a sqlite database.
