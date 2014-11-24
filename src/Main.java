@@ -72,7 +72,10 @@ public class Main {
                    "  ruling      TEXT, "  +
                    "  tips        TEXT, "  +
                    "  trivia      TEXT, "  +
-                   "  lore        TEXT)";
+                   "  lore        TEXT, "  +
+                   "  ocgStatus   TEXT, "  +
+                   "  tcgAdvStatus TEXT, "  +
+                   "  tcgTrnStatus TEXT) ";
         stmt.executeUpdate(sql);
         stmt.close();
 
@@ -80,7 +83,8 @@ public class Main {
                 "INSERT INTO Card (name, attribute, types, level, atkdef, cardnum, passcode, " +
                 "effectTypes, materials, fusionMaterials, rank, ritualSpell, " +
                 "pendulumScale, type, property, summonedBy, limitText, synchroMaterial, ritualMonster, " +
-                "ruling, tips, trivia, lore) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+                "ruling, tips, trivia, lore, ocgStatus, tcgAdvStatus, tcgTrnStatus) " + 
+                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
 
         int size = cardList.size();
         for (int i = 0; i < size; i++) {
@@ -111,7 +115,7 @@ public class Main {
         String attribute = "", types = "", level = "", atkdef = "", cardnum = "", passcode = "",
                 effectTypes = "", materials = "", fusionMaterials = "", rank = "", ritualSpell = "",
                 pendulumScale = "", type = "", property = "", summonedBy = "", limitText = "", synchroMaterial = "", ritualMonster = "",
-                ruling = "", tips = "", trivia = "", lore = "";
+                ruling = "", tips = "", trivia = "", lore = "", ocgStatus = "", tcgAdvStatus = "", tcgTrnStatus = "";
 
         String cardName = cardList.get(i);
         String cardLink = cardLinkTable.get(cardName)[0];
@@ -196,6 +200,60 @@ public class Main {
 
         lore = getCardLore(mainDom);
 
+        try {
+            Elements statusRows = mainDom.getElementsByClass("cardtablestatuses").first().getElementsByTag("tr");
+            Element statusRow = null;
+            for (int j = 0; j < statusRows.size(); j++) {
+                if (statusRows.get(j).text().equals("TCG/OCG statuses")) {
+                    statusRow = statusRows.get(j + 1);
+                    break;
+                }
+            }
+
+            if (statusRow == null) {
+                System.out.println("Status not found for: " + cardName);
+            }
+            else {
+                Elements th = statusRow.getElementsByTag("th");
+                Elements td = statusRow.getElementsByTag("td");
+                for (int j = 0; j < th.size(); j++) {
+                    String header = th.get(j).text();
+                    String stt = td.get(j).text();
+                    if (header.equals("OCG")) {
+                        if (stt.equals("Unlimited")) {
+                            ocgStatus = "U";
+                        }
+                        else {
+                            ocgStatus = stt;
+                        }
+                    }
+                    else if (header.equals("TCG Advanced")) {
+                        if (stt.equals("Unlimited")) {
+                            tcgAdvStatus = "U";
+                        }
+                        else {
+                            tcgAdvStatus = stt;
+                        }
+                    }
+                    else if (header.equals("TCG Traditional")) {
+                        if (stt.equals("Unlimited")) {
+                            tcgTrnStatus = "U";
+                        }
+                        else {
+                            tcgTrnStatus = stt;
+                        }
+                    }
+                    else {
+                        System.out.println("Status not found: " + cardName);
+                    }
+                }
+            }
+        }
+        catch (Exception e) {
+            System.out.println("Error getting status: " + cardName);
+            e.printStackTrace();
+        }
+
         psParms.setString(1,  cardName);
         psParms.setString(2,  attribute);
         psParms.setString(3,  types);
@@ -219,6 +277,9 @@ public class Main {
         psParms.setString(21, tips);
         psParms.setString(22, trivia);
         psParms.setString(23, lore);
+        psParms.setString(24, ocgStatus);
+        psParms.setString(25, tcgAdvStatus);
+        psParms.setString(26, tcgTrnStatus);
 
         psParms.executeUpdate();
     }
