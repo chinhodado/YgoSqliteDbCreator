@@ -23,7 +23,7 @@ import org.jsoup.select.Elements;
 
 
 public class MainParallel {
-    static ArrayList<String> cardList = new ArrayList<String>(8192);
+    static List<String> cardList = new ArrayList<String>(8192);
     static Hashtable<String, String[]> cardLinkTable = new Hashtable<String, String[]>(8192);
     static Connection connection;
     static PreparedStatement psParms;
@@ -44,7 +44,7 @@ public class MainParallel {
         Statement stmt = null;
 
         Class.forName("org.sqlite.JDBC");
-        connection = DriverManager.getConnection("jdbc:sqlite:ygo.db");
+        connection = DriverManager.getConnection("jdbc:sqlite::memory:");
 
         stmt = connection.createStatement();
         String sql = "DROP TABLE IF EXISTS Card;";
@@ -81,7 +81,6 @@ public class MainParallel {
                    "  tcgAdvStatus TEXT, "  +
                    "  tcgTrnStatus TEXT) ";
         stmt.executeUpdate(sql);
-        stmt.close();
 
         psParms = connection.prepareStatement(
                 "INSERT INTO Card (name, attribute, types, level, atkdef, cardnum, passcode, " +
@@ -93,7 +92,7 @@ public class MainParallel {
         int size = cardList.size();
 
         // partitioning
-        final int NUM_THREAD = 8;
+        final int NUM_THREAD = 10;
         final int CHUNK_SIZE = size / NUM_THREAD;
         final int LAST_CHUNK = size - (NUM_THREAD - 1) * CHUNK_SIZE; // last chunk can be a bit bigger
 
@@ -133,6 +132,10 @@ public class MainParallel {
         for(Thread t : threadList) {
             t.join();
         }
+
+        // Dump the database contents to a file
+        stmt.executeUpdate("backup to ygo.db");
+        stmt.close();
 
         connection.close();
         System.out.println("\nDone. Has the universe ended yet?");
