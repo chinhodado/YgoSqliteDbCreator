@@ -41,17 +41,11 @@ public class MainParallel {
         System.out.println("Initializing OCG card list");
         initializeCardList(null, false);
 
-        Statement stmt = null;
-
         Class.forName("org.sqlite.JDBC");
         connection = DriverManager.getConnection("jdbc:sqlite::memory:");
 
-        stmt = connection.createStatement();
-        String sql = "DROP TABLE IF EXISTS Card;";
-        stmt.executeUpdate(sql);
-
-        stmt = connection.createStatement();
-        sql = "CREATE TABLE Card " +
+        Statement stmt = connection.createStatement();
+        String sql = "CREATE TABLE Card " +
                 //    "(ID INT PRIMARY KEY     NOT NULL," +
                 "( name              TEXT NOT NULL, " +
                 "  attribute         TEXT, " +      //             "Attribute"
@@ -92,7 +86,7 @@ public class MainParallel {
         int size = cardList.size();
 
         // partitioning
-        final int NUM_THREAD = 10;
+        final int NUM_THREAD = 15;
         final int CHUNK_SIZE = size / NUM_THREAD;
         final int LAST_CHUNK = size - (NUM_THREAD - 1) * CHUNK_SIZE; // last chunk can be a bit bigger
 
