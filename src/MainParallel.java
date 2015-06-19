@@ -4,7 +4,10 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -24,25 +27,27 @@ import org.jsoup.select.Elements;
 
 public class MainParallel {
     static List<String> cardList = new ArrayList<String>(8192);
+    static List<String> errorList = new ArrayList<String>();
     static Hashtable<String, String[]> cardLinkTable = new Hashtable<String, String[]>(8192);
-    static Connection connection;
     static PreparedStatement psParms;
     static final AtomicInteger globalCounter = new AtomicInteger();
+    static int iteration = 0;
 
     // settings
     static boolean ENABLE_VERBOSE_LOG   = false;
     static boolean ENABLE_TRIVIA = true;
     static boolean ENABLE_TIPS   = true;
+    static final int NUM_THREAD = 15;
+    static final int MAX_RETRY = 20;
 
     public static void main (String args[]) throws InterruptedException, ExecutionException, JSONException, IOException, ClassNotFoundException, SQLException {
-        long startTime = System.currentTimeMillis();
-        System.out.println("Initializing TCG card list");
+        logLine("Initializing TCG card list");
         initializeCardList(null, true);
-        System.out.println("Initializing OCG card list");
+        logLine("Initializing OCG card list");
         initializeCardList(null, false);
 
         Class.forName("org.sqlite.JDBC");
-        connection = DriverManager.getConnection("jdbc:sqlite::memory:");
+        Connection connection = DriverManager.getConnection("jdbc:sqlite::memory:");
 
         Statement stmt = connection.createStatement();
         String sql = "CREATE TABLE Card " +
@@ -83,12 +88,41 @@ public class MainParallel {
                 "ruling, tips, trivia, lore, ocgStatus, tcgAdvStatus, tcgTrnStatus) " +
                 "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
 
+        logLine("Getting and processing Yugioh Wikia articles using " + NUM_THREAD + " threads.");
+        while (!cardList.isEmpty() && iteration < MAX_RETRY) {
+            iteration++;
+            doWork();
+        }
+
+        System.out.println();
+        logLine("Completed all iterations.");
+
+        // Dump the database contents to a file
+        stmt.executeUpdate("backup to ygo.db");
+        stmt.close();
+
+        connection.close();
+        logLine("Saved to ygo.db successfully. Everything done.");
+    }
+
+    public static void doWork() throws InterruptedException {
+        System.out.println();
+        logLine("Executing iteration " + iteration);
         int size = cardList.size();
 
+        if (size == 0) {
+            return;
+        }
+
+        int numThread = NUM_THREAD;
+
+        if (numThread >= size) {
+            numThread = 1;
+        }
+
         // partitioning
-        final int NUM_THREAD = 15;
-        final int CHUNK_SIZE = size / NUM_THREAD;
-        final int LAST_CHUNK = size - (NUM_THREAD - 1) * CHUNK_SIZE; // last chunk can be a bit bigger
+        final int CHUNK_SIZE = size / numThread;
+        final int LAST_CHUNK = size - (numThread - 1) * CHUNK_SIZE; // last chunk can be a bit bigger
 
         List<List<String>> parts = new ArrayList<List<String>>();
         for (int i = 0; i < size - LAST_CHUNK; i += CHUNK_SIZE) {
@@ -102,23 +136,23 @@ public class MainParallel {
         );
 
         List<Thread> threadList = new ArrayList<Thread>();
-        for (int i = 0; i < NUM_THREAD; i++) {
+        for (int i = 0; i < numThread; i++) {
             List<String> workList = parts.get(i);
             Runnable r = () -> {
                 for (int n = 0; n < workList.size(); n++) {
                     globalCounter.incrementAndGet();
+                    String card = workList.get(n);
                     try {
                         if (globalCounter.get() % 120 == 0) System.out.println();
                         System.out.print(".");
                         processCard(workList.get(n));
                     } catch (Exception e) {
-                        System.out.println("Error: " + workList.get(n));
-                        e.printStackTrace();
+                        System.out.print("." + card + ".");
+                        errorList.add(card);
                     }
                 }
             };
             Thread thread = new Thread(r);
-            System.out.println("Thread " + i + " started.");
             thread.start();
             threadList.add(thread);
         }
@@ -127,15 +161,9 @@ public class MainParallel {
             t.join();
         }
 
-        // Dump the database contents to a file
-        stmt.executeUpdate("backup to ygo.db");
-        stmt.close();
-
-        connection.close();
-        System.out.println("\nDone. Has the universe ended yet?");
-        long endTime = System.currentTimeMillis();
-        long elapsedTime = endTime - startTime;
-        System.out.println("Time elapsed: " + elapsedTime / 1000 + "s");
+        // the errorList is now the new wordList, ready for the next iteration
+        cardList = errorList;
+        errorList = new ArrayList<String>();
     }
 
     /**
@@ -425,5 +453,11 @@ public class MainParallel {
         if (myJSON.has("offset")) {
             initializeCardList((String) myJSON.get("offset"), isTcg);
         }
+    }
+
+    public static void logLine(String txt) {
+        DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+        Date date = new Date();
+        System.out.println(dateFormat.format(date) + ": " + txt);
     }
 }
