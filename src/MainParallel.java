@@ -53,7 +53,7 @@ public class MainParallel {
         String sql = "CREATE TABLE Card " +
                 "( name              TEXT NOT NULL, " +
                 "  attribute         TEXT, " +      //             "Attribute"
-                "  types             TEXT, " +      //             "Types"
+                "  types             TEXT, " +      //             "Types" or "Type"
                 "  level             INTEGER, " +   //             "Level"
                 "  atk               INTEGER, " +   //             "ATK/DEF"
                 "  def               INTEGER, " +   //             "ATK/DEF"
@@ -65,7 +65,6 @@ public class MainParallel {
                 "  rank              INTEGER, " +   // xyz         "Rank"
                 "  ritualSpell       TEXT, " +      // ritual      "Ritual Spell Card required"
                 "  pendulumScale     INTEGER, " +   // pendulum    "Pendulum Scale"
-                "  type              TEXT, " +      // spell, trap "Type"
                 "  property          TEXT, " +      // spell, trap "Property"
                 "  summonedBy        TEXT, " +      // token       "Summoned by the effect of"
                 "  limitText         TEXT, " +      //             "Limitation Text"
@@ -84,9 +83,9 @@ public class MainParallel {
         psParms = connection.prepareStatement(
                 "INSERT INTO Card (name, attribute, types, level, atk, def, cardnum, passcode, " +
                 "effectTypes, materials, fusionMaterials, rank, ritualSpell, " +
-                "pendulumScale, type, property, summonedBy, limitText, synchroMaterial, ritualMonster, " +
+                "pendulumScale, property, summonedBy, limitText, synchroMaterial, ritualMonster, " +
                 "ruling, tips, trivia, lore, ocgStatus, tcgAdvStatus, tcgTrnStatus) " +
-                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
 
         logLine("Getting and processing Yugioh Wikia articles using " + NUM_THREAD + " threads.");
         while (!cardList.isEmpty() && iteration < MAX_RETRY) {
@@ -108,7 +107,7 @@ public class MainParallel {
     public static void doWork() throws InterruptedException {
         System.out.println();
         int size = cardList.size();
-        logLine("Executing iteration " + iteration + ", cards left: " + size);        
+        logLine("Executing iteration " + iteration + ", cards left: " + size);
 
         if (size == 0) {
             return;
@@ -175,7 +174,7 @@ public class MainParallel {
     static void processCard(String cardName) throws IOException, SQLException {
         String attribute = "", types = "", level = "", atk = "", def = "", cardnum = "", passcode = "",
                 effectTypes = "", materials = "", fusionMaterials = "", rank = "", ritualSpell = "",
-                pendulumScale = "", type = "", property = "", summonedBy = "", limitText = "", synchroMaterial = "", ritualMonster = "",
+                pendulumScale = "", property = "", summonedBy = "", limitText = "", synchroMaterial = "", ritualMonster = "",
                 ruling = "", tips = "", trivia = "", lore = "", ocgStatus = "", tcgAdvStatus = "", tcgTrnStatus = "";
 
         String cardLink = cardLinkTable.get(cardName)[0];
@@ -232,6 +231,7 @@ public class MainParallel {
                 switch (headerText) {
                     case "Attribute"                    : attribute       = data; break;
                     case "Types"                        : types           = data; break;
+                    case "Type"                         : types           = data; break;
                     case "Level"                        : level           = data; break;
                     case "ATK/DEF"                      : {
                     	atk = data.split("/")[0];
@@ -246,7 +246,6 @@ public class MainParallel {
                     case "Rank"                         : rank            = data; break;
                     case "Ritual Spell Card required"   : ritualSpell     = data; break;
                     case "Pendulum Scale"               : pendulumScale   = data; break;
-                    case "Type"                         : type            = data; break;
                     case "Property"                     : property        = data; break;
                     case "Summoned by the effect of"    : summonedBy      = data; break;
                     case "Limitation Text"              : limitText       = data; break;
@@ -323,7 +322,7 @@ public class MainParallel {
         psParms.setString(3,  types);
         psParms.setString(4,  level);
         psParms.setString(5,  atk);
-        psParms.setString(6,  def);        
+        psParms.setString(6,  def);
         psParms.setString(7,  cardnum);
         psParms.setString(8,  passcode);
         psParms.setString(9,  effectTypes);
@@ -332,19 +331,18 @@ public class MainParallel {
         psParms.setString(12, rank);
         psParms.setString(13, ritualSpell);
         psParms.setString(14, pendulumScale);
-        psParms.setString(15, type);
-        psParms.setString(16, property);
-        psParms.setString(17, summonedBy);
-        psParms.setString(18, limitText);
-        psParms.setString(19, synchroMaterial);
-        psParms.setString(20, ritualMonster);
-        psParms.setString(21, ruling);
-        psParms.setString(22, tips);
-        psParms.setString(23, trivia);
-        psParms.setString(24, lore);
-        psParms.setString(25, ocgStatus);
-        psParms.setString(26, tcgAdvStatus);
-        psParms.setString(27, tcgTrnStatus);
+        psParms.setString(15, property);
+        psParms.setString(16, summonedBy);
+        psParms.setString(17, limitText);
+        psParms.setString(18, synchroMaterial);
+        psParms.setString(19, ritualMonster);
+        psParms.setString(20, ruling);
+        psParms.setString(21, tips);
+        psParms.setString(22, trivia);
+        psParms.setString(23, lore);
+        psParms.setString(24, ocgStatus);
+        psParms.setString(25, tcgAdvStatus);
+        psParms.setString(26, tcgTrnStatus);
 
         psParms.executeUpdate();
     }
