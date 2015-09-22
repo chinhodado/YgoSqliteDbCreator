@@ -184,7 +184,7 @@ public class MainParallel {
             if (ENABLE_VERBOSE_LOG) System.out.println("Fetching " + cardName + "'s ruling");
             Document dom = Jsoup.parse(Jsoup.connect("http://yugioh.wikia.com/wiki/Card_Rulings:" + cardLink.substring(6))
                     .ignoreContentType(true).execute().body());
-            ruling = getCardInfoGeneric(dom);
+            ruling = getCardInfoGeneric(dom, false);
         }
         catch (Exception e) {}
 
@@ -193,7 +193,7 @@ public class MainParallel {
                 if (ENABLE_VERBOSE_LOG) System.out.println("Fetching " + cardName + "'s tips");
                 Document dom = Jsoup.parse(Jsoup.connect("http://yugioh.wikia.com/wiki/Card_Tips:" + cardLink.substring(6))
                         .timeout(5 * 1000).ignoreContentType(true).execute().body());
-                tips = getCardInfoGeneric(dom);
+                tips = getCardInfoGeneric(dom, true);
             }
             catch (Exception e) {}
         }
@@ -203,7 +203,7 @@ public class MainParallel {
                 if (ENABLE_VERBOSE_LOG) System.out.println("Fetching " + cardName + "'s trivia");
                 Document dom = Jsoup.parse(Jsoup.connect("http://yugioh.wikia.com/wiki/Card_Trivia:" + cardLink.substring(6))
                         .timeout(5 * 1000).ignoreContentType(true).execute().body());
-                trivia = getCardInfoGeneric(dom);
+                trivia = getCardInfoGeneric(dom, false);
             }
             catch (Exception e) {}
         }
@@ -349,20 +349,20 @@ public class MainParallel {
 
     private static String getCardLore(Document dom) {
         Element effectBox = dom.getElementsByClass("cardtablespanrow").first().getElementsByClass("navbox-list").first();
-        String effect = getCleanedHtml(effectBox);
+        String effect = getCleanedHtml(effectBox, false);
 
         // turn <dl> into <p> and <dt> into <b>
         effect = effect.replace("<dl", "<p").replace("dl>", "p>").replace("<dt", "<b").replace("dt>", "b>");
         return effect;
     }
 
-    private static String getCardInfoGeneric(Document dom) {
+    private static String getCardInfoGeneric(Document dom, boolean isTipsPage) {
         Element content = dom.getElementById("mw-content-text");
-        String ruling = getCleanedHtml(content);
+        String ruling = getCleanedHtml(content, isTipsPage);
         return ruling;
     }
 
-    static String getCleanedHtml(Element content) {
+    static String getCleanedHtml(Element content, boolean isTipPage) {
         Elements navboxes = content.select("table.navbox");
         if (!navboxes.isEmpty()) {navboxes.first().remove();} // remove the navigation box
 
@@ -381,6 +381,25 @@ public class MainParallel {
                 // TODO: may want to put a placeholder here so we know to put it back in later
                 table.remove();
             }
+        }
+
+        if (isTipPage) {
+        	// remove the "lists" tables
+        	boolean foundListsHeader = false;
+        	Elements children = content.select("#mw-content-text").first().children();
+        	for (Element child : children) {
+        		if ((child.tagName().equals("h2") || child.tagName().equals("h3")) && child.text().contains("List")) {
+        			foundListsHeader = true;
+        			child.remove();
+        			continue;
+        		}
+        		else if (foundListsHeader && (child.tagName().equals("h2") || child.tagName().equals("h3"))) {
+        			break;
+        		}
+        		else if (foundListsHeader) {
+        			child.remove();
+        		}
+        	}
         }
 
         removeComments(content);                         // remove comments
