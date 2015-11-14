@@ -37,8 +37,8 @@ public class MainParallel {
     static boolean ENABLE_VERBOSE_LOG   = false;
     static boolean ENABLE_TRIVIA = true;
     static boolean ENABLE_TIPS   = true;
-    static final int NUM_THREAD = 15;
-    static final int MAX_RETRY = 20;
+    static final int NUM_THREAD = 8;
+    static final int MAX_RETRY = 1000;
 
     public static void main (String args[]) throws InterruptedException, ExecutionException, JSONException, IOException, ClassNotFoundException, SQLException {
         logLine("Initializing TCG card list");
@@ -91,6 +91,7 @@ public class MainParallel {
         while (!cardList.isEmpty() && iteration < MAX_RETRY) {
             iteration++;
             doWork();
+            Thread.sleep(1000);
         }
 
         System.out.println();
@@ -144,7 +145,7 @@ public class MainParallel {
                     try {
                         if (globalCounter.get() % 120 == 0) System.out.println();
                         System.out.print(".");
-                        processCard(workList.get(n));
+                        processCard(workList.get(n), iteration == 2);
                     } catch (Exception e) {
                         System.out.print("." + card + ".");
                         errorList.add(card);
@@ -168,10 +169,12 @@ public class MainParallel {
     /**
      *
      * @param cardName The card name
+     * @param purgePage If true, the article page will be purged on the server.
+     *                  Useful for dealing with the "blank page" issue.
      * @throws IOException
      * @throws SQLException
      */
-    static void processCard(String cardName) throws IOException, SQLException {
+    static void processCard(String cardName, boolean purgePage) throws IOException, SQLException {
         String attribute = "", types = "", level = "", atk = "", def = "", cardnum = "", passcode = "",
                 effectTypes = "", materials = "", fusionMaterials = "", rank = "", ritualSpell = "",
                 pendulumScale = "", property = "", summonedBy = "", limitText = "", synchroMaterial = "", ritualMonster = "",
@@ -179,6 +182,10 @@ public class MainParallel {
 
         String cardLink = cardLinkTable.get(cardName)[0];
         String cardUrl = "http://yugioh.wikia.com" + cardLink;
+
+        if (purgePage) {
+            cardUrl += "?action=purge";
+        }
 
         try {
             if (ENABLE_VERBOSE_LOG) System.out.println("Fetching " + cardName + "'s ruling");
