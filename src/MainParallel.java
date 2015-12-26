@@ -80,6 +80,17 @@ public class MainParallel {
                    "  tcgTrnStatus TEXT) ";
         stmt.executeUpdate(sql);
 
+        stmt.executeUpdate("CREATE INDEX attribute_idx ON Card (attribute)");
+        stmt.executeUpdate("CREATE INDEX level_idx ON Card (level)");
+        stmt.executeUpdate("CREATE INDEX rank_idx ON Card (rank)");
+        stmt.executeUpdate("CREATE INDEX pendulumScale_idx ON Card (pendulumScale)");
+        stmt.executeUpdate("CREATE INDEX atk_idx ON Card (atk)");
+        stmt.executeUpdate("CREATE INDEX def_idx ON Card (def)");
+        stmt.executeUpdate("CREATE INDEX property_idx ON Card (property)");
+        stmt.executeUpdate("CREATE INDEX ocgStatus_idx ON Card (ocgStatus)");
+        stmt.executeUpdate("CREATE INDEX tcgAdvStatus_idx ON Card (tcgAdvStatus)");
+        stmt.executeUpdate("CREATE INDEX tcgTrnStatus_idx ON Card (tcgTrnStatus)");
+
         psParms = connection.prepareStatement(
                 "INSERT INTO Card (name, attribute, types, level, atk, def, cardnum, passcode, " +
                 "effectTypes, materials, fusionMaterials, rank, ritualSpell, " +
