@@ -91,7 +91,7 @@ public class MainParallel {
         while (!cardList.isEmpty() && iteration < MAX_RETRY) {
             iteration++;
             doWork();
-            Thread.sleep(1000);
+            Thread.sleep(5000);
         }
 
         System.out.println();
@@ -145,7 +145,7 @@ public class MainParallel {
                     try {
                         if (globalCounter.get() % 120 == 0) System.out.println();
                         System.out.print(".");
-                        processCard(workList.get(n), iteration == 2);
+                        processCard(workList.get(n), iteration >= 2 && iteration <= 10);
                     } catch (Exception e) {
                         System.out.print("." + card + ".");
                         errorList.add(card);
