@@ -12,6 +12,8 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -77,9 +79,11 @@ public class MainParallel {
                    "  lore        TEXT, "  +
                    "  ocgStatus   TEXT, "  +
                    "  tcgAdvStatus TEXT, "  +
-                   "  tcgTrnStatus TEXT) ";
+                   "  tcgTrnStatus TEXT, "  +
+                   "  img TEXT) ";
         stmt.executeUpdate(sql);
 
+        stmt.executeUpdate("CREATE INDEX name_idx ON Card (name)");
         stmt.executeUpdate("CREATE INDEX attribute_idx ON Card (attribute)");
         stmt.executeUpdate("CREATE INDEX level_idx ON Card (level)");
         stmt.executeUpdate("CREATE INDEX rank_idx ON Card (rank)");
@@ -95,8 +99,8 @@ public class MainParallel {
                 "INSERT INTO Card (name, attribute, types, level, atk, def, cardnum, passcode, " +
                 "effectTypes, materials, fusionMaterials, rank, ritualSpell, " +
                 "pendulumScale, property, summonedBy, limitText, synchroMaterial, ritualMonster, " +
-                "ruling, tips, trivia, lore, ocgStatus, tcgAdvStatus, tcgTrnStatus) " +
-                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+                "ruling, tips, trivia, lore, ocgStatus, tcgAdvStatus, tcgTrnStatus, img) " +
+                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
 
         logLine("Getting and processing Yugioh Wikia articles using " + NUM_THREAD + " threads.");
         while (!cardList.isEmpty() && iteration < MAX_RETRY) {
@@ -189,7 +193,7 @@ public class MainParallel {
         String attribute = "", types = "", level = "", atk = "", def = "", cardnum = "", passcode = "",
                 effectTypes = "", materials = "", fusionMaterials = "", rank = "", ritualSpell = "",
                 pendulumScale = "", property = "", summonedBy = "", limitText = "", synchroMaterial = "", ritualMonster = "",
-                ruling = "", tips = "", trivia = "", lore = "", ocgStatus = "", tcgAdvStatus = "", tcgTrnStatus = "";
+                ruling = "", tips = "", trivia = "", lore = "", ocgStatus = "", tcgAdvStatus = "", tcgTrnStatus = "", img = "";
 
         String cardLink = cardLinkTable.get(cardName)[0];
         String cardUrl = "http://yugioh.wikia.com" + cardLink;
@@ -229,6 +233,18 @@ public class MainParallel {
         if (ENABLE_VERBOSE_LOG) System.out.println("Fetching " + cardName + "'s general info");
         Document mainDom = Jsoup.parse(Jsoup.connect(cardUrl).timeout(0).ignoreContentType(true).execute().body());
         Elements rows = mainDom.getElementsByClass("cardtable").first().getElementsByClass("cardtablerow");
+
+        try {
+            Element imgAnchor = mainDom.getElementsByClass("cardtable-cardimage").first().getElementsByClass("image-thumbnail").first();
+            String imgUrl = imgAnchor.attr("href");
+            Pattern p = Pattern.compile("http(s?)://vignette(\\d)\\.wikia\\.nocookie\\.net/yugioh/images/./(.*?)/(.*?)/");
+            Matcher m = p.matcher(imgUrl);
+            m.find();
+            img = m.group(2) + m.group(3) + m.group(4);
+        }
+        catch (Exception e) {
+
+        }
 
         // first row is "Attribute" for monster, "Type" for spell/trap and "Types" for token
         boolean foundFirstRow = false;
@@ -361,6 +377,7 @@ public class MainParallel {
         psParms.setString(24, ocgStatus);
         psParms.setString(25, tcgAdvStatus);
         psParms.setString(26, tcgTrnStatus);
+        psParms.setString(27, img);
 
         psParms.executeUpdate();
     }
