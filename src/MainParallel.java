@@ -248,7 +248,8 @@ public class MainParallel {
 
         // first row is "Attribute" for monster, "Type" for spell/trap and "Types" for token
         boolean foundFirstRow = false;
-        for (Element row : rows) {
+        for (int i = 0; i < rows.size(); i++) {
+            Element row = rows.get(i);
             Element header = row.getElementsByClass("cardtablerowheader").first();
             if (header == null) continue;
             String headerText = header.text();
@@ -267,9 +268,9 @@ public class MainParallel {
                     case "Types"                        : types           = data; break;
                     case "Type"                         : types           = data; break;
                     case "Level"                        : level           = data; break;
-                    case "ATK/DEF"                      : {
-                    	atk = data.split("/")[0];
-                    	def = data.split("/")[1];
+                    case "ATK / DEF"                    : {
+                    	atk = data.split(" / ")[0];
+                    	def = data.split(" / ")[1];
                     	break;
                 	}
                     case "Card Number"                  : cardnum         = data; break;
@@ -285,71 +286,73 @@ public class MainParallel {
                     case "Limitation Text"              : limitText       = data; break;
                     case "Synchro Material"             : synchroMaterial = data; break;
                     case "Ritual Monster required"      : ritualMonster   = data; break;
+                    case "Statuses":
+                        try {
+                            String rowspan = header.attr("rowspan");
+                            int numStatusRow;
+                            if (rowspan != null && !rowspan.equals("")) {
+                                numStatusRow = Integer.parseInt(rowspan);
+                            }
+                            else {
+                                numStatusRow = 1;
+                            }
+
+                            for (int r = 0; r < numStatusRow; r++) {
+                                Element statusRow = rows.get(i + r);
+                                String statusRowData = statusRow.getElementsByClass("cardtablerowdata").first().text().trim();
+                                String status;
+                                if (statusRowData.contains("Not yet released")) {
+                                    status = "Not yet released";
+                                }
+                                else {
+                                    status = statusRowData.split(" ")[0];
+                                }
+
+                                if (status.equals("Unlimited")) {
+                                    status = "U";
+                                }
+
+                                if (numStatusRow == 1) {
+                                    ocgStatus = status;
+                                    tcgAdvStatus = status;
+                                    tcgTrnStatus = status;
+                                }
+                                else {
+                                    if (statusRowData.contains("OCG")) {
+                                        ocgStatus = status;
+                                    }
+
+                                    if (statusRowData.contains("Advanced")) {
+                                        tcgAdvStatus = status;
+                                    }
+
+                                    if (statusRowData.contains("Traditional")) {
+                                        tcgTrnStatus = status;
+                                    }
+                                }
+                            }
+
+                            // skip through the status rows
+                            i = i + numStatusRow - 1;
+                        }
+                        catch (Exception e) {
+                            System.out.println("Error getting status: " + cardName);
+                            e.printStackTrace();
+                        }
+                        break;
                     default:
                         System.out.println("Attribute not found: " + headerText);
                         break;
                 }
-                if (headerText.equals("Card effect types") || headerText.equals("Limitation Text")) {
+
+                // rely on the assumption that Statuses is always the last info row
+                if (headerText.equals("Statuses")) {
                     break;
                 }
             }
         }
 
         lore = getCardLore(mainDom);
-
-        try {
-            Elements statusRows = mainDom.getElementsByClass("cardtablestatuses").first().getElementsByTag("tr");
-            Element statusRow = null;
-            for (int j = 0; j < statusRows.size(); j++) {
-                if (statusRows.get(j).text().equals("TCG/OCG statuses")) {
-                    statusRow = statusRows.get(j + 1);
-                    break;
-                }
-            }
-
-            if (statusRow == null) {
-                System.out.println("Status not found for: " + cardName);
-            }
-            else {
-                Elements th = statusRow.getElementsByTag("th");
-                Elements td = statusRow.getElementsByTag("td");
-                for (int j = 0; j < th.size(); j++) {
-                    String header = th.get(j).text();
-                    String stt = td.get(j).text();
-                    if (header.equals("OCG")) {
-                        if (stt.equals("Unlimited")) {
-                            ocgStatus = "U";
-                        }
-                        else {
-                            ocgStatus = stt;
-                        }
-                    }
-                    else if (header.equals("TCG Advanced")) {
-                        if (stt.equals("Unlimited")) {
-                            tcgAdvStatus = "U";
-                        }
-                        else {
-                            tcgAdvStatus = stt;
-                        }
-                    }
-                    else if (header.equals("TCG Traditional")) {
-                        if (stt.equals("Unlimited")) {
-                            tcgTrnStatus = "U";
-                        }
-                        else {
-                            tcgTrnStatus = stt;
-                        }
-                    }
-                    else {
-                        System.out.println("Status not found: " + cardName);
-                    }
-                }
-            }
-        }
-        catch (Exception e) {
-            System.out.println("Error getting status: " + cardName);
-            e.printStackTrace();
-        }
 
         psParms.setString(1,  cardName);
         psParms.setString(2,  attribute);
