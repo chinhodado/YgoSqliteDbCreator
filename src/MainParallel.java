@@ -8,8 +8,10 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
@@ -29,6 +31,8 @@ import org.jsoup.select.Elements;
 
 public class MainParallel {
     static List<String> cardList = new ArrayList<String>(8192);
+    static Set<String> ocgCards = new HashSet<String>(8192);
+    static Set<String> tcgCards = new HashSet<String>(8192);
     static List<String> errorList = new ArrayList<String>();
     static Hashtable<String, String[]> cardLinkTable = new Hashtable<String, String[]>(8192);
     static PreparedStatement psParms;
@@ -78,8 +82,10 @@ public class MainParallel {
                    "  trivia      TEXT, "  +
                    "  lore        TEXT, "  +
                    "  ocgStatus   TEXT, "  +
-                   "  tcgAdvStatus TEXT, "  +
-                   "  tcgTrnStatus TEXT, "  +
+                   "  tcgAdvStatus TEXT, " +
+                   "  tcgTrnStatus TEXT, " +
+                   "  ocgOnly   INTEGER, " +
+                   "  tcgOnly   INTEGER, " +
                    "  img TEXT) ";
         stmt.executeUpdate(sql);
 
@@ -94,13 +100,15 @@ public class MainParallel {
         stmt.executeUpdate("CREATE INDEX ocgStatus_idx ON Card (ocgStatus)");
         stmt.executeUpdate("CREATE INDEX tcgAdvStatus_idx ON Card (tcgAdvStatus)");
         stmt.executeUpdate("CREATE INDEX tcgTrnStatus_idx ON Card (tcgTrnStatus)");
+        stmt.executeUpdate("CREATE INDEX ocgOnly_idx ON Card (ocgOnly)");
+        stmt.executeUpdate("CREATE INDEX tcgOnly_idx ON Card (tcgOnly)");
 
         psParms = connection.prepareStatement(
                 "INSERT INTO Card (name, attribute, types, level, atk, def, cardnum, passcode, " +
                 "effectTypes, materials, fusionMaterials, rank, ritualSpell, " +
                 "pendulumScale, property, summonedBy, limitText, synchroMaterial, ritualMonster, " +
-                "ruling, tips, trivia, lore, ocgStatus, tcgAdvStatus, tcgTrnStatus, img) " +
-                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+                "ruling, tips, trivia, lore, ocgStatus, tcgAdvStatus, tcgTrnStatus, ocgOnly, tcgOnly, img) " +
+                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
 
         logLine("Getting and processing Yugioh Wikia articles using " + NUM_THREAD + " threads.");
         while (!cardList.isEmpty() && iteration < MAX_RETRY) {
@@ -193,7 +201,8 @@ public class MainParallel {
         String attribute = "", types = "", level = "", atk = "", def = "", cardnum = "", passcode = "",
                 effectTypes = "", materials = "", fusionMaterials = "", rank = "", ritualSpell = "",
                 pendulumScale = "", property = "", summonedBy = "", limitText = "", synchroMaterial = "", ritualMonster = "",
-                ruling = "", tips = "", trivia = "", lore = "", ocgStatus = "", tcgAdvStatus = "", tcgTrnStatus = "", img = "";
+                ruling = "", tips = "", trivia = "", lore = "", ocgStatus = "", tcgAdvStatus = "", tcgTrnStatus = "",
+                ocgOnly = "", tcgOnly = "", img = "";
 
         String cardLink = cardLinkTable.get(cardName)[0];
         String cardUrl = "http://yugioh.wikia.com" + cardLink;
@@ -354,6 +363,14 @@ public class MainParallel {
 
         lore = getCardLore(mainDom);
 
+        if (tcgCards.contains(cardName) && !ocgCards.contains(cardName)) {
+            tcgOnly = "1";
+        }
+
+        if (ocgCards.contains(cardName) && !tcgCards.contains(cardName)) {
+            ocgOnly = "1";
+        }
+
         psParms.setString(1,  cardName);
         psParms.setString(2,  attribute);
         psParms.setString(3,  types);
@@ -380,7 +397,9 @@ public class MainParallel {
         psParms.setString(24, ocgStatus);
         psParms.setString(25, tcgAdvStatus);
         psParms.setString(26, tcgTrnStatus);
-        psParms.setString(27, img);
+        psParms.setString(27, ocgOnly);
+        psParms.setString(28, tcgOnly);
+        psParms.setString(29, img);
 
         psParms.executeUpdate();
     }
@@ -507,6 +526,13 @@ public class MainParallel {
                 String[] tmp = {myArray.getJSONObject(i).getString("url")}; // TODO: no need for array
                        // myArray.getJSONObject(i).getString("id")};
                 cardLinkTable.put(cardName, tmp);
+            }
+
+            if (isTcg) {
+                tcgCards.add(cardName);
+            }
+            else {
+                ocgCards.add(cardName);
             }
         }
 
