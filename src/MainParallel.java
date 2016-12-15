@@ -28,23 +28,22 @@ import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
 import org.jsoup.select.Elements;
 
-
 public class MainParallel {
-    static List<String> cardList = new ArrayList<String>(8192);
-    static Set<String> ocgCards = new HashSet<String>(8192);
-    static Set<String> tcgCards = new HashSet<String>(8192);
-    static List<String> errorList = new ArrayList<String>();
-    static Hashtable<String, String[]> cardLinkTable = new Hashtable<String, String[]>(8192);
-    static PreparedStatement psParms;
-    static final AtomicInteger globalCounter = new AtomicInteger();
-    static int iteration = 0;
+    private static List<String> cardList = new ArrayList<>(8192);
+    private static Set<String> ocgCards = new HashSet<>(8192);
+    private static Set<String> tcgCards = new HashSet<>(8192);
+    private static List<String> errorList = new ArrayList<>();
+    private static Hashtable<String, String[]> cardLinkTable = new Hashtable<>(8192);
+    private static PreparedStatement psParms;
+    private static final AtomicInteger globalCounter = new AtomicInteger();
+    private static int iteration = 0;
 
     // settings
-    static boolean ENABLE_VERBOSE_LOG   = false;
-    static boolean ENABLE_TRIVIA = true;
-    static boolean ENABLE_TIPS   = true;
-    static final int NUM_THREAD = 8;
-    static final int MAX_RETRY = 1000;
+    private static final boolean ENABLE_VERBOSE_LOG = false;
+    private static final boolean ENABLE_TRIVIA = true;
+    private static final boolean ENABLE_TIPS = true;
+    private static final int NUM_THREAD = 8;
+    private static final int MAX_RETRY = 1000;
 
     public static void main (String args[]) throws InterruptedException, ExecutionException, JSONException, IOException, ClassNotFoundException, SQLException {
         logLine("Initializing TCG card list");
@@ -128,7 +127,7 @@ public class MainParallel {
         logLine("Saved to ygo.db successfully. Everything done.");
     }
 
-    public static void doWork() throws InterruptedException {
+    private static void doWork() throws InterruptedException {
         System.out.println();
         int size = cardList.size();
         logLine("Executing iteration " + iteration + ", cards left: " + size);
@@ -147,28 +146,27 @@ public class MainParallel {
         final int CHUNK_SIZE = size / numThread;
         final int LAST_CHUNK = size - (numThread - 1) * CHUNK_SIZE; // last chunk can be a bit bigger
 
-        List<List<String>> parts = new ArrayList<List<String>>();
+        List<List<String>> parts = new ArrayList<>();
         for (int i = 0; i < size - LAST_CHUNK; i += CHUNK_SIZE) {
-            parts.add(new ArrayList<String>(
-                cardList.subList(i, i + CHUNK_SIZE))
+            parts.add(new ArrayList<>(
+                    cardList.subList(i, i + CHUNK_SIZE))
             );
         }
 
-        parts.add(new ArrayList<String>(
-            cardList.subList(size - LAST_CHUNK, size))
+        parts.add(new ArrayList<>(
+                cardList.subList(size - LAST_CHUNK, size))
         );
 
-        List<Thread> threadList = new ArrayList<Thread>();
+        List<Thread> threadList = new ArrayList<>();
         for (int i = 0; i < numThread; i++) {
             List<String> workList = parts.get(i);
             Runnable r = () -> {
-                for (int n = 0; n < workList.size(); n++) {
+                for (String card : workList) {
                     globalCounter.incrementAndGet();
-                    String card = workList.get(n);
                     try {
                         if (globalCounter.get() % 120 == 0) System.out.println();
                         System.out.print(".");
-                        processCard(workList.get(n), iteration >= 2 && iteration <= 10);
+                        processCard(card, iteration >= 2 && iteration <= 10);
                     } catch (Exception e) {
                         System.out.print("." + card + ".");
                         errorList.add(card);
@@ -186,7 +184,7 @@ public class MainParallel {
 
         // the errorList is now the new wordList, ready for the next iteration
         cardList = errorList;
-        errorList = new ArrayList<String>();
+        errorList = new ArrayList<>();
     }
 
     /**
@@ -197,7 +195,7 @@ public class MainParallel {
      * @throws IOException
      * @throws SQLException
      */
-    static void processCard(String cardName, boolean purgePage) throws IOException, SQLException {
+    private static void processCard(String cardName, boolean purgePage) throws IOException, SQLException {
         String attribute = "", types = "", level = "", atk = "", def = "", cardnum = "", passcode = "",
                 effectTypes = "", materials = "", fusionMaterials = "", rank = "", ritualSpell = "",
                 pendulumScale = "", property = "", summonedBy = "", limitText = "", synchroMaterial = "", ritualMonster = "",
@@ -265,7 +263,7 @@ public class MainParallel {
             if (!foundFirstRow && !headerText.equals("Attribute") && !headerText.equals("Type") && !headerText.equals("Types")) {
                 continue;
             }
-            if (headerText.equals("Other card information") || header.equals("External links")) {
+            if (headerText.equals("Other card information") || headerText.equals("External links")) {
                 // we have reached the end for some reasons, exit now
                 break;
             }
@@ -415,11 +413,10 @@ public class MainParallel {
 
     private static String getCardInfoGeneric(Document dom, boolean isTipsPage) {
         Element content = dom.getElementById("mw-content-text");
-        String ruling = getCleanedHtml(content, isTipsPage);
-        return ruling;
+        return getCleanedHtml(content, isTipsPage);
     }
 
-    static String getCleanedHtml(Element content, boolean isTipPage) {
+    private static String getCleanedHtml(Element content, boolean isTipPage) {
         Elements navboxes = content.select("table.navbox");
         if (!navboxes.isEmpty()) {navboxes.first().remove();} // remove the navigation box
 
@@ -448,7 +445,6 @@ public class MainParallel {
         		if ((child.tagName().equals("h2") || child.tagName().equals("h3")) && child.text().contains("List")) {
         			foundListsHeader = true;
         			child.remove();
-        			continue;
         		}
         		else if (foundListsHeader && (child.tagName().equals("h2") || child.tagName().equals("h3"))) {
         			break;
@@ -541,7 +537,7 @@ public class MainParallel {
         }
     }
 
-    public static void logLine(String txt) {
+    private static void logLine(String txt) {
         DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
         Date date = new Date();
         System.out.println(dateFormat.format(date) + ": " + txt);
