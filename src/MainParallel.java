@@ -6,12 +6,15 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Hashtable;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
@@ -32,8 +35,8 @@ public class MainParallel {
     private static List<String> cardList = new ArrayList<>(8192);
     private static Set<String> ocgCards = new HashSet<>(8192);
     private static Set<String> tcgCards = new HashSet<>(8192);
-    private static List<String> errorList = new ArrayList<>();
-    private static Hashtable<String, String[]> cardLinkTable = new Hashtable<>(8192);
+    private static List<String> errorList = new CopyOnWriteArrayList<>();
+    private static Map<String, String[]> cardLinkTable = new HashMap<>(8192);
     private static PreparedStatement psParms;
     private static final AtomicInteger globalCounter = new AtomicInteger();
     private static int iteration = 0;
