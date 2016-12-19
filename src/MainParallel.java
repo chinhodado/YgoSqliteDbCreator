@@ -39,7 +39,7 @@ public class MainParallel {
     private static List<String> errorList = new CopyOnWriteArrayList<>();
     private static Map<String, String[]> cardLinkTable = new HashMap<>(8192);
     private static PreparedStatement psParms;
-    private static final AtomicInteger globalCounter = new AtomicInteger();
+    private static final AtomicInteger doneCounter = new AtomicInteger();
     private static int iteration = 0;
     private static int totalCards;
 
@@ -162,12 +162,12 @@ public class MainParallel {
         List<List<String>> parts = new ArrayList<>();
         for (int i = 0; i < size - LAST_CHUNK; i += CHUNK_SIZE) {
             parts.add(new ArrayList<>(
-                    cardList.subList(i, i + CHUNK_SIZE))
+                cardList.subList(i, i + CHUNK_SIZE))
             );
         }
 
         parts.add(new ArrayList<>(
-                cardList.subList(size - LAST_CHUNK, size))
+            cardList.subList(size - LAST_CHUNK, size))
         );
 
         List<Thread> threadList = new ArrayList<>();
@@ -190,7 +190,7 @@ public class MainParallel {
         Thread logThread = new Thread(() -> {
             while (!Thread.interrupted()) {
                 System.out.print("\r");
-                int done = globalCounter.get();
+                int done = doneCounter.get();
                 int error = errorList.size();
                 double percentage = (double)done / totalCards * 100;
                 System.out.print("Completed: " + done + "/" + totalCards + "(" + percentage + "%), error: " + error + "                  ");
@@ -438,7 +438,7 @@ public class MainParallel {
         psParms.setString(29, img);
 
         psParms.executeUpdate();
-        globalCounter.incrementAndGet();
+        doneCounter.incrementAndGet();
     }
 
     private static String getCardLore(Document dom) {
