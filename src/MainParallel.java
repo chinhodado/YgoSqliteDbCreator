@@ -48,7 +48,6 @@ public class MainParallel {
     private static final boolean ENABLE_TRIVIA = true;
     private static final boolean ENABLE_TIPS = true;
     private static final int NUM_THREAD = 8;
-    private static final int MAX_RETRY = 1000;
 
     public static void main (String args[]) throws InterruptedException, ExecutionException, JSONException, IOException, ClassNotFoundException, SQLException {
         logLine("Initializing TCG card list");
@@ -117,7 +116,7 @@ public class MainParallel {
 
         logLine("Getting and processing Yugioh Wikia articles using " + NUM_THREAD + " threads.");
         Scanner in = new Scanner(System.in);
-        while (!cardList.isEmpty() && iteration < MAX_RETRY) {
+        while (!cardList.isEmpty()) {
             iteration++;
             doWork();
 
@@ -128,8 +127,6 @@ public class MainParallel {
                     break;
                 }
             }
-
-            Thread.sleep(5000);
         }
 
         System.out.println();
