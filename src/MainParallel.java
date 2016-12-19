@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
@@ -40,6 +41,7 @@ public class MainParallel {
     private static PreparedStatement psParms;
     private static final AtomicInteger globalCounter = new AtomicInteger();
     private static int iteration = 0;
+    private static int totalCards;
 
     // settings
     private static final boolean ENABLE_VERBOSE_LOG = false;
@@ -53,6 +55,7 @@ public class MainParallel {
         initializeCardList(null, true);
         logLine("Initializing OCG card list");
         initializeCardList(null, false);
+        totalCards = cardList.size();
 
         Class.forName("org.sqlite.JDBC");
         Connection connection = DriverManager.getConnection("jdbc:sqlite::memory:");
@@ -113,9 +116,19 @@ public class MainParallel {
                 "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
 
         logLine("Getting and processing Yugioh Wikia articles using " + NUM_THREAD + " threads.");
+        Scanner in = new Scanner(System.in);
         while (!cardList.isEmpty() && iteration < MAX_RETRY) {
             iteration++;
             doWork();
+
+            if (!cardList.isEmpty()) {
+                System.out.println("Do you want to retry the " + cardList.size() + " cards with error? (y/n)");
+                String s = in.next();
+                if (s.equals("n")) {
+                    break;
+                }
+            }
+
             Thread.sleep(5000);
         }
 
@@ -165,13 +178,9 @@ public class MainParallel {
             List<String> workList = parts.get(i);
             Runnable r = () -> {
                 for (String card : workList) {
-                    globalCounter.incrementAndGet();
                     try {
-                        if (globalCounter.get() % 120 == 0) System.out.println();
-                        System.out.print(".");
                         processCard(card, iteration >= 2 && iteration <= 10);
                     } catch (Exception e) {
-                        System.out.print("." + card + ".");
                         errorList.add(card);
                     }
                 }
@@ -181,8 +190,37 @@ public class MainParallel {
             threadList.add(thread);
         }
 
+        Thread logThread = new Thread(() -> {
+            while (!Thread.interrupted()) {
+                System.out.print("\r");
+                int done = globalCounter.get();
+                int error = errorList.size();
+                double percentage = (double)done / totalCards * 100;
+                System.out.print("Completed: " + done + "/" + totalCards + "(" + percentage + "%), error: " + error + "                  ");
+
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        });
+
+        logThread.start();
+
         for(Thread t : threadList) {
             t.join();
+        }
+
+        logThread.interrupt();
+        logThread.join();
+
+        if (!errorList.isEmpty()) {
+            System.out.println("\nError remaining: ");
+            for (String s : errorList) {
+                System.out.print(s + " | ");
+            }
+            System.out.println();
         }
 
         // the errorList is now the new wordList, ready for the next iteration
@@ -403,6 +441,7 @@ public class MainParallel {
         psParms.setString(29, img);
 
         psParms.executeUpdate();
+        globalCounter.incrementAndGet();
     }
 
     private static String getCardLore(Document dom) {
