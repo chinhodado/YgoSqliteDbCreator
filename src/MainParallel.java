@@ -563,6 +563,9 @@ public class MainParallel {
         JSONArray myArray = myJSON.getJSONArray("items");
         for (int i = 0; i < myArray.length(); i++) {
             String cardName = myArray.getJSONObject(i).getString("title");
+            if (cardName.trim().endsWith("(temp)")) {
+                continue;
+            }
             if (!cardLinkTable.containsKey(cardName)) {
                 cardList.add(cardName);
                 String[] tmp = {myArray.getJSONObject(i).getString("url")}; // TODO: no need for array
