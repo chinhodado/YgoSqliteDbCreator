@@ -93,6 +93,13 @@ public class MainParallel {
                    "  img TEXT) ";
         stmt.executeUpdate(sql);
 
+        sql = "CREATE TABLE metadata (dataCreated TEXT NOT NULL)";
+        stmt.executeUpdate(sql);
+        String date = new SimpleDateFormat("yyyyMMdd").format(new Date());
+        psParms = connection.prepareStatement("INSERT INTO metadata (dataCreated) VALUES (?)");
+        psParms.setString(1, date);
+        psParms.executeUpdate();
+
         stmt.executeUpdate("CREATE INDEX name_idx ON Card (name)");
         stmt.executeUpdate("CREATE INDEX attribute_idx ON Card (attribute)");
         stmt.executeUpdate("CREATE INDEX level_idx ON Card (level)");
