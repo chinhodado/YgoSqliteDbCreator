@@ -36,12 +36,18 @@ public class MainParallel {
     private static List<String> cardList = new ArrayList<>(8192);
     private static Set<String> ocgCards = new HashSet<>(8192);
     private static Set<String> tcgCards = new HashSet<>(8192);
-    private static List<String> errorList = new CopyOnWriteArrayList<>();
     private static Map<String, String[]> cardLinkTable = new HashMap<>(8192);
+
+    private static List<String> boosterList = new ArrayList<>();
+    private static Set<String> ocgBoosters = new HashSet<>();
+    private static Set<String> tcgBoosters = new HashSet<>();
+    private static Map<String, String[]> boosterLinkTable = new HashMap<>();
+
     private static PreparedStatement psParms;
-    private static final AtomicInteger doneCounter = new AtomicInteger();
+    private static PreparedStatement psBoosterInsert;
+    private static final AtomicInteger cardDoneCounter = new AtomicInteger();
+    private static final AtomicInteger boosterDoneCounter = new AtomicInteger();
     private static int iteration = 0;
-    private static int totalCards;
 
     // settings
     private static final boolean ENABLE_VERBOSE_LOG = false;
@@ -54,7 +60,10 @@ public class MainParallel {
         initializeCardList(null, true);
         logLine("Initializing OCG card list");
         initializeCardList(null, false);
-        totalCards = cardList.size();
+        logLine("Initializing TCG booster list");
+        initializeBoosterList(null, true);
+        logLine("Initializing OCG booster list");
+        initializeBoosterList(null, false);
 
         Class.forName("org.sqlite.JDBC");
         Connection connection = DriverManager.getConnection("jdbc:sqlite::memory:");
@@ -95,6 +104,9 @@ public class MainParallel {
 
         sql = "CREATE TABLE metadata (dataCreated TEXT NOT NULL)";
         stmt.executeUpdate(sql);
+        sql = "CREATE TABLE Booster (name TEXT NOT NULL, enReleaseDate TEXT, jpReleaseDate TEXT, imgSrc TEXT)";
+        stmt.executeUpdate(sql);
+
         String date = new SimpleDateFormat("yyyyMMdd").format(new Date());
         psParms = connection.prepareStatement("INSERT INTO metadata (dataCreated) VALUES (?)");
         psParms.setString(1, date);
@@ -113,6 +125,7 @@ public class MainParallel {
         stmt.executeUpdate("CREATE INDEX tcgTrnStatus_idx ON Card (tcgTrnStatus)");
         stmt.executeUpdate("CREATE INDEX ocgOnly_idx ON Card (ocgOnly)");
         stmt.executeUpdate("CREATE INDEX tcgOnly_idx ON Card (tcgOnly)");
+        stmt.executeUpdate("CREATE INDEX booster_name_idx ON Booster (name)");
 
         psParms = connection.prepareStatement(
                 "INSERT INTO Card (name, attribute, types, level, atk, def, cardnum, passcode, " +
@@ -121,14 +134,38 @@ public class MainParallel {
                 "ruling, tips, trivia, lore, ocgStatus, tcgAdvStatus, tcgTrnStatus, ocgOnly, tcgOnly, img) " +
                 "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
 
+        psBoosterInsert = connection.prepareStatement(
+                "INSERT INTO Booster (name, enReleaseDate, jpReleaseDate, imgSrc) " +
+                        "VALUES (?,?,?,?)");
+
         logLine("Getting and processing Yugioh Wikia articles using " + NUM_THREAD + " threads.");
         Scanner in = new Scanner(System.in);
-        while (!cardList.isEmpty()) {
-            iteration++;
-            doWork();
 
-            if (!cardList.isEmpty()) {
-                System.out.println("Do you want to retry the " + cardList.size() + " cards with error? (y/n)");
+        logLine("Processing card list");
+        List<String> workList = cardList;
+        int totalCards = cardList.size();
+        while (!workList.isEmpty()) {
+            iteration++;
+            workList = doWork(workList, MainParallel::processCard, totalCards, cardDoneCounter);
+
+            if (!workList.isEmpty()) {
+                System.out.println("Do you want to retry the " + workList.size() + " cards with error? (y/n)");
+                String s = in.next();
+                if (s.equals("n")) {
+                    break;
+                }
+            }
+        }
+
+        logLine("Processing booster list");
+        workList = boosterList;
+        int totalBoosters = boosterList.size();
+        while (!workList.isEmpty()) {
+            iteration++;
+            workList = doWork(workList, MainParallel::processBooster, totalBoosters, boosterDoneCounter);
+
+            if (!workList.isEmpty()) {
+                System.out.println("Do you want to retry the " + workList.size() + " boosters with error? (y/n)");
                 String s = in.next();
                 if (s.equals("n")) {
                     break;
@@ -147,13 +184,13 @@ public class MainParallel {
         logLine("Saved to ygo.db successfully. Everything done.");
     }
 
-    private static void doWork() throws InterruptedException {
+    private static List<String> doWork(List<String> workList, Work workFunction, int totalWorkSize, AtomicInteger doneCounter) throws InterruptedException {
         System.out.println();
-        int size = cardList.size();
-        logLine("Executing iteration " + iteration + ", cards left: " + size);
-
+        int size = workList.size();
+        logLine("Executing iteration " + iteration + ", items left: " + size);
+        final List<String> errorList = new CopyOnWriteArrayList<>();
         if (size == 0) {
-            return;
+            return errorList;
         }
 
         int numThread = NUM_THREAD;
@@ -169,21 +206,21 @@ public class MainParallel {
         List<List<String>> parts = new ArrayList<>();
         for (int i = 0; i < size - LAST_CHUNK; i += CHUNK_SIZE) {
             parts.add(new ArrayList<>(
-                cardList.subList(i, i + CHUNK_SIZE))
+                    workList.subList(i, i + CHUNK_SIZE))
             );
         }
 
         parts.add(new ArrayList<>(
-            cardList.subList(size - LAST_CHUNK, size))
+                workList.subList(size - LAST_CHUNK, size))
         );
 
         List<Thread> threadList = new ArrayList<>();
         for (int i = 0; i < numThread; i++) {
-            List<String> workList = parts.get(i);
+            List<String> part = parts.get(i);
             Runnable r = () -> {
-                for (String card : workList) {
+                for (String card : part) {
                     try {
-                        processCard(card, iteration >= 2 && iteration <= 10);
+                        workFunction.processItem(card, iteration >= 2 && iteration <= 10, doneCounter);
                     } catch (Exception e) {
                         errorList.add(card);
                     }
@@ -199,8 +236,8 @@ public class MainParallel {
                 System.out.print("\r");
                 int done = doneCounter.get();
                 int error = errorList.size();
-                double percentage = (double)done / totalCards * 100;
-                System.out.print("Completed: " + done + "/" + totalCards + "(" + percentage + "%), error: " + error + "                  ");
+                double percentage = (double)done / totalWorkSize * 100;
+                System.out.print("Completed: " + done + "/" + totalWorkSize + "(" + percentage + "%), error: " + error + "                  ");
 
                 try {
                     Thread.sleep(500);
@@ -227,9 +264,34 @@ public class MainParallel {
             System.out.println();
         }
 
-        // the errorList is now the new wordList, ready for the next iteration
-        cardList = errorList;
-        errorList = new ArrayList<>();
+        return errorList;
+    }
+
+    private static void processBooster(String boosterName, boolean purgePage, AtomicInteger doneCounter) throws IOException, SQLException {
+        String enReleaseDate, jpReleaseDate, imgSrc;
+
+        String boosterLink = boosterLinkTable.get(boosterName)[0];
+        String boosterUrl = "http://yugioh.wikia.com" + boosterLink;
+
+        if (purgePage) {
+            boosterUrl += "?action=purge";
+        }
+
+        if (ENABLE_VERBOSE_LOG) System.out.println("Fetching " + boosterName + "'s general info");
+        Document mainDom = Jsoup.parse(Jsoup.connect(boosterUrl).timeout(0).ignoreContentType(true).execute().body());
+        BoosterParser parser = new BoosterParser(boosterName, mainDom);
+
+        enReleaseDate = parser.getEnglishReleaseDate();
+        jpReleaseDate = parser.getJapaneseReleaseDate();
+        imgSrc = getShortenedImageLink(parser.getImageLink());
+
+        psBoosterInsert.setString(1, boosterName);
+        psBoosterInsert.setString(2, enReleaseDate);
+        psBoosterInsert.setString(3, jpReleaseDate);
+        psBoosterInsert.setString(4, imgSrc);
+
+        psBoosterInsert.executeUpdate();
+        doneCounter.incrementAndGet();
     }
 
     /**
@@ -240,7 +302,7 @@ public class MainParallel {
      * @throws IOException
      * @throws SQLException
      */
-    private static void processCard(String cardName, boolean purgePage) throws IOException, SQLException {
+    private static void processCard(String cardName, boolean purgePage, AtomicInteger doneCounter) throws IOException, SQLException {
         String attribute = "", types = "", level = "", atk = "", def = "", cardnum = "", passcode = "",
                 effectTypes = "", materials = "", fusionMaterials = "", rank = "", ritualSpell = "",
                 pendulumScale = "", property = "", summonedBy = "", limitText = "", synchroMaterial = "", ritualMonster = "",
@@ -289,10 +351,7 @@ public class MainParallel {
         try {
             Element imgAnchor = mainDom.getElementsByClass("cardtable-cardimage").first().getElementsByClass("image-thumbnail").first();
             String imgUrl = imgAnchor.attr("href");
-            Pattern p = Pattern.compile("http(s?)://vignette(\\d)\\.wikia\\.nocookie\\.net/yugioh/images/./(.*?)/(.*?)/");
-            Matcher m = p.matcher(imgUrl);
-            m.find();
-            img = m.group(2) + m.group(3) + m.group(4);
+            img = getShortenedImageLink(imgUrl);
         }
         catch (Exception e) {
 
@@ -513,6 +572,20 @@ public class MainParallel {
         return text;
     }
 
+    private static final Pattern IMG_URL_PATTERN =
+            Pattern.compile("http(s?)://vignette(\\d)\\.wikia\\.nocookie\\.net/yugioh/images/./(.*?)/(.*?)/");
+    private static String getShortenedImageLink(String imgUrl) {
+        try {
+            Matcher m = IMG_URL_PATTERN.matcher(imgUrl);
+            m.find();
+            String img = m.group(2) + m.group(3) + m.group(4);
+            return img;
+        }
+        catch (Exception e) {
+            return null;
+        }
+    }
+
     private static void removeComments(Node node) {
         for (int i = 0; i < node.childNodes().size();) {
             Node child = node.childNode(i);
@@ -586,9 +659,54 @@ public class MainParallel {
         }
     }
 
+    private static void initializeBoosterList(String offset, boolean isTcg) throws InterruptedException, ExecutionException, JSONException, IOException {
+        String url;
+        if (isTcg) {
+            url = "http://yugioh.wikia.com/api/v1/Articles/List?category=TCG_Booster_Packs&limit=5000&namespaces=0";
+        }
+        else {
+            url = "http://yugioh.wikia.com/api/v1/Articles/List?category=OCG_Booster_Packs&limit=5000&namespaces=0";
+        }
+
+        if (offset != null) {
+            url = url + "&offset=" + offset;
+        }
+        String jsonString = Jsoup.connect(url).ignoreContentType(true).execute().body();
+
+        JSONObject myJSON = new JSONObject(jsonString);
+        JSONArray myArray = myJSON.getJSONArray("items");
+        for (int i = 0; i < myArray.length(); i++) {
+            String boosterName = myArray.getJSONObject(i).getString("title");
+            if (boosterName.trim().endsWith("(temp)")) {
+                continue;
+            }
+            if (!boosterLinkTable.containsKey(boosterName)) {
+                boosterList.add(boosterName);
+                String[] tmp = {myArray.getJSONObject(i).getString("url")}; // TODO: no need for array
+                // myArray.getJSONObject(i).getString("id")};
+                boosterLinkTable.put(boosterName, tmp);
+            }
+
+            if (isTcg) {
+                tcgBoosters.add(boosterName);
+            }
+            else {
+                ocgBoosters.add(boosterName);
+            }
+        }
+
+        if (myJSON.has("offset")) {
+            initializeBoosterList((String) myJSON.get("offset"), isTcg);
+        }
+    }
+
     private static void logLine(String txt) {
         DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
         Date date = new Date();
         System.out.println(dateFormat.format(date) + ": " + txt);
+    }
+
+    interface Work {
+        void processItem(String itemName, boolean purgePage, AtomicInteger doneCounter) throws IOException, SQLException;
     }
 }
