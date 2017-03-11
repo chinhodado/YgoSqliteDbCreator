@@ -278,7 +278,7 @@ public class MainParallel {
         }
 
         if (ENABLE_VERBOSE_LOG) System.out.println("Fetching " + boosterName + "'s general info");
-        Document mainDom = Jsoup.parse(Jsoup.connect(boosterUrl).timeout(0).ignoreContentType(true).execute().body());
+        Document mainDom = Jsoup.parse(jsoupGet(boosterUrl));
         BoosterParser parser = new BoosterParser(boosterName, mainDom);
 
         enReleaseDate = parser.getEnglishReleaseDate();
@@ -299,8 +299,8 @@ public class MainParallel {
      * @param cardName The card name
      * @param purgePage If true, the article page will be purged on the server.
      *                  Useful for dealing with the "blank page" issue.
-     * @throws IOException
-     * @throws SQLException
+     * @throws IOException when something's wrong with fetching card info from the net
+     * @throws SQLException when something's wrong with inserting the card into the database
      */
     private static void processCard(String cardName, boolean purgePage, AtomicInteger doneCounter) throws IOException, SQLException {
         String attribute = "", types = "", level = "", atk = "", def = "", cardnum = "", passcode = "",
@@ -318,34 +318,31 @@ public class MainParallel {
 
         try {
             if (ENABLE_VERBOSE_LOG) System.out.println("Fetching " + cardName + "'s ruling");
-            Document dom = Jsoup.parse(Jsoup.connect("http://yugioh.wikia.com/wiki/Card_Rulings:" + cardLink.substring(6))
-                    .ignoreContentType(true).execute().body());
+            Document dom = Jsoup.parse(jsoupGet("http://yugioh.wikia.com/wiki/Card_Rulings:" + cardLink.substring(6)));
             ruling = getCardInfoGeneric(dom, false);
         }
-        catch (Exception e) {}
+        catch (Exception e) { /* do nothing */ }
 
         if (ENABLE_TIPS) {
             try {
                 if (ENABLE_VERBOSE_LOG) System.out.println("Fetching " + cardName + "'s tips");
-                Document dom = Jsoup.parse(Jsoup.connect("http://yugioh.wikia.com/wiki/Card_Tips:" + cardLink.substring(6))
-                        .timeout(5 * 1000).ignoreContentType(true).execute().body());
+                Document dom = Jsoup.parse(jsoupGet("http://yugioh.wikia.com/wiki/Card_Tips:" + cardLink.substring(6)));
                 tips = getCardInfoGeneric(dom, true);
             }
-            catch (Exception e) {}
+            catch (Exception e) { /* do nothing */ }
         }
 
         if (ENABLE_TRIVIA) {
             try {
                 if (ENABLE_VERBOSE_LOG) System.out.println("Fetching " + cardName + "'s trivia");
-                Document dom = Jsoup.parse(Jsoup.connect("http://yugioh.wikia.com/wiki/Card_Trivia:" + cardLink.substring(6))
-                        .timeout(5 * 1000).ignoreContentType(true).execute().body());
+                Document dom = Jsoup.parse(jsoupGet("http://yugioh.wikia.com/wiki/Card_Trivia:" + cardLink.substring(6)));
                 trivia = getCardInfoGeneric(dom, false);
             }
-            catch (Exception e) {}
+            catch (Exception e) { /* do nothing */ }
         }
 
         if (ENABLE_VERBOSE_LOG) System.out.println("Fetching " + cardName + "'s general info");
-        Document mainDom = Jsoup.parse(Jsoup.connect(cardUrl).timeout(0).ignoreContentType(true).execute().body());
+        Document mainDom = Jsoup.parse(jsoupGet(cardUrl));
         Elements rows = mainDom.getElementsByClass("cardtable").first().getElementsByClass("cardtablerow");
 
         try {
@@ -354,7 +351,7 @@ public class MainParallel {
             img = getShortenedImageLink(imgUrl);
         }
         catch (Exception e) {
-
+            /* do nothing */
         }
 
         // first row is "Attribute" for monster, "Type" for spell/trap and "Types" for token
@@ -630,7 +627,7 @@ public class MainParallel {
         if (offset != null) {
             url = url + "&offset=" + offset;
         }
-        String jsonString = Jsoup.connect(url).ignoreContentType(true).execute().body();
+        String jsonString = jsoupGet(url);
 
         JSONObject myJSON = new JSONObject(jsonString);
         JSONArray myArray = myJSON.getJSONArray("items");
@@ -671,7 +668,7 @@ public class MainParallel {
         if (offset != null) {
             url = url + "&offset=" + offset;
         }
-        String jsonString = Jsoup.connect(url).ignoreContentType(true).execute().body();
+        String jsonString = jsoupGet(url);
 
         JSONObject myJSON = new JSONObject(jsonString);
         JSONArray myArray = myJSON.getJSONArray("items");
@@ -708,5 +705,13 @@ public class MainParallel {
 
     interface Work {
         void processItem(String itemName, boolean purgePage, AtomicInteger doneCounter) throws IOException, SQLException;
+    }
+
+    private static String jsoupGet(String url) throws IOException {
+        String content = Jsoup.connect(url)
+                .userAgent("Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36")
+                .referrer("http://www.google.com")
+                .timeout(5 * 1000).ignoreContentType(true).execute().body();
+        return content;
     }
 }
