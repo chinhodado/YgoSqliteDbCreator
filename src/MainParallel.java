@@ -224,7 +224,7 @@ public class MainParallel {
             Runnable r = () -> {
                 for (String card : part) {
                     try {
-                        workFunction.processItem(card, iteration >= 2 && iteration <= 10, doneCounter);
+                        workFunction.processItem(card, doneCounter);
                     } catch (Exception e) {
                         errorList.add(card);
                     }
@@ -271,15 +271,11 @@ public class MainParallel {
         return errorList;
     }
 
-    private static void processBooster(String boosterName, boolean purgePage, AtomicInteger doneCounter) throws IOException, SQLException {
+    private static void processBooster(String boosterName, AtomicInteger doneCounter) throws IOException, SQLException {
         String enReleaseDate, jpReleaseDate, imgSrc;
 
         String boosterLink = boosterLinkTable.get(boosterName)[0];
         String boosterUrl = "http://yugioh.wikia.com" + boosterLink;
-
-        if (purgePage) {
-            boosterUrl += "?action=purge";
-        }
 
         if (ENABLE_VERBOSE_LOG) System.out.println("Fetching " + boosterName + "'s general info");
         Document mainDom = Jsoup.parse(jsoupGet(boosterUrl));
@@ -301,12 +297,10 @@ public class MainParallel {
     /**
      *
      * @param cardName The card name
-     * @param purgePage If true, the article page will be purged on the server.
-     *                  Useful for dealing with the "blank page" issue.
      * @throws IOException when something's wrong with fetching card info from the net
      * @throws SQLException when something's wrong with inserting the card into the database
      */
-    private static void processCard(String cardName, boolean purgePage, AtomicInteger doneCounter) throws IOException, SQLException {
+    private static void processCard(String cardName, AtomicInteger doneCounter) throws IOException, SQLException {
         String attribute = "", cardType = "", types = "", level = "", atk = "", def = "", passcode = "",
                 effectTypes = "", materials = "", fusionMaterials = "", rank = "", ritualSpell = "",
                 pendulumScale = "", linkMarkers = "", link = "", property = "", summonedBy = "", limitText = "", synchroMaterial = "", ritualMonster = "",
@@ -315,10 +309,6 @@ public class MainParallel {
 
         String cardLink = cardLinkTable.get(cardName)[0];
         String cardUrl = "http://yugioh.wikia.com" + cardLink;
-
-        if (purgePage) {
-            cardUrl += "?action=purge";
-        }
 
         try {
             if (ENABLE_VERBOSE_LOG) System.out.println("Fetching " + cardName + "'s ruling");
@@ -716,7 +706,7 @@ public class MainParallel {
     }
 
     interface Work {
-        void processItem(String itemName, boolean purgePage, AtomicInteger doneCounter) throws IOException, SQLException;
+        void processItem(String itemName, AtomicInteger doneCounter) throws IOException, SQLException;
     }
 
     private static String jsoupGet(String url) throws IOException {
