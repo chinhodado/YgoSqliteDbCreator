@@ -71,24 +71,26 @@ public class MainParallel {
         Statement stmt = connection.createStatement();
         String sql = "CREATE TABLE Card " +
                 "( name              TEXT NOT NULL, " +
-                "  attribute         TEXT, " +      //             "Attribute"
-                "  types             TEXT, " +      //             "Types" or "Type"
-                "  level             INTEGER, " +   //             "Level"
-                "  atk               INTEGER, " +   //             "ATK/DEF"
-                "  def               INTEGER, " +   //             "ATK/DEF"
-                "  cardnum           TEXT, " +      //             "Card Number"
-                "  passcode          TEXT, " +      //             "Passcode"
-                "  effectTypes       TEXT, " +      //             "Card effect types"
-                "  materials         TEXT, " +      // synchro     "Materials"
-                "  fusionMaterials   TEXT, " +      // fusion      "Fusion Material"
-                "  rank              INTEGER, " +   // xyz         "Rank"
-                "  ritualSpell       TEXT, " +      // ritual      "Ritual Spell Card required"
-                "  pendulumScale     INTEGER, " +   // pendulum    "Pendulum Scale"
-                "  property          TEXT, " +      // spell, trap "Property"
-                "  summonedBy        TEXT, " +      // token       "Summoned by the effect of"
-                "  limitText         TEXT, " +      //             "Limitation Text"
-                "  synchroMaterial   TEXT, " +      //             "Synchro Material"
-                "  ritualMonster     TEXT, " +      //             "Ritual Monster required"
+                "  attribute         TEXT, " +      //              "Attribute"
+                "  cardType          TEXT, " +      //              "Card type"
+                "  types             TEXT, " +      //              "Types"
+                "  level             INTEGER, " +   //              "Level"
+                "  atk               INTEGER, " +   //              "ATK/DEF"
+                "  def               INTEGER, " +   //              "ATK/DEF"
+                "  passcode          TEXT, " +      //              "Passcode"
+                "  effectTypes       TEXT, " +      //              "Card effect types"
+                "  materials         TEXT, " +      // synchro      "Materials"
+                "  fusionMaterials   TEXT, " +      // fusion       "Fusion Material"
+                "  rank              INTEGER, " +   // xyz          "Rank"
+                "  ritualSpell       TEXT, " +      // ritual       "Ritual Spell Card required"
+                "  pendulumScale     INTEGER, " +   // pendulum     "Pendulum Scale"
+                "  linkMarkers       TEXT, " +      // link         "Link Markers"
+                "  link              INTEGER, " +   // link         "ATK / LINK"
+                "  property          TEXT, " +      // spell, trap  "Property"
+                "  summonedBy        TEXT, " +      // token        "Summoned by the effect of"
+                "  limitText         TEXT, " +      //              "Limitation Text"
+                "  synchroMaterial   TEXT, " +      //              "Synchro Material"
+                "  ritualMonster     TEXT, " +      // ritual spell "Ritual Monster required"
                    // long stuffs...
                    "  ruling      TEXT, "  +
                    "  tips        TEXT, "  +
@@ -113,9 +115,11 @@ public class MainParallel {
         psParms.executeUpdate();
 
         stmt.executeUpdate("CREATE INDEX name_idx ON Card (name)");
+        stmt.executeUpdate("CREATE INDEX type_idx ON Card (cardType)");
         stmt.executeUpdate("CREATE INDEX attribute_idx ON Card (attribute)");
         stmt.executeUpdate("CREATE INDEX level_idx ON Card (level)");
         stmt.executeUpdate("CREATE INDEX rank_idx ON Card (rank)");
+        stmt.executeUpdate("CREATE INDEX link_idx ON Card (link)");
         stmt.executeUpdate("CREATE INDEX pendulumScale_idx ON Card (pendulumScale)");
         stmt.executeUpdate("CREATE INDEX atk_idx ON Card (atk)");
         stmt.executeUpdate("CREATE INDEX def_idx ON Card (def)");
@@ -128,11 +132,11 @@ public class MainParallel {
         stmt.executeUpdate("CREATE INDEX booster_name_idx ON Booster (name)");
 
         psParms = connection.prepareStatement(
-                "INSERT INTO Card (name, attribute, types, level, atk, def, cardnum, passcode, " +
+                "INSERT INTO Card (name, attribute, cardType, types, level, atk, def, passcode, " +
                 "effectTypes, materials, fusionMaterials, rank, ritualSpell, " +
-                "pendulumScale, property, summonedBy, limitText, synchroMaterial, ritualMonster, " +
+                "pendulumScale, linkMarkers, link, property, summonedBy, limitText, synchroMaterial, ritualMonster, " +
                 "ruling, tips, trivia, lore, ocgStatus, tcgAdvStatus, tcgTrnStatus, ocgOnly, tcgOnly, img) " +
-                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
 
         psBoosterInsert = connection.prepareStatement(
                 "INSERT INTO Booster (name, enReleaseDate, jpReleaseDate, imgSrc) " +
@@ -303,9 +307,9 @@ public class MainParallel {
      * @throws SQLException when something's wrong with inserting the card into the database
      */
     private static void processCard(String cardName, boolean purgePage, AtomicInteger doneCounter) throws IOException, SQLException {
-        String attribute = "", types = "", level = "", atk = "", def = "", cardnum = "", passcode = "",
+        String attribute = "", cardType = "", types = "", level = "", atk = "", def = "", passcode = "",
                 effectTypes = "", materials = "", fusionMaterials = "", rank = "", ritualSpell = "",
-                pendulumScale = "", property = "", summonedBy = "", limitText = "", synchroMaterial = "", ritualMonster = "",
+                pendulumScale = "", linkMarkers = "", link = "", property = "", summonedBy = "", limitText = "", synchroMaterial = "", ritualMonster = "",
                 ruling = "", tips = "", trivia = "", lore = "", ocgStatus = "", tcgAdvStatus = "", tcgTrnStatus = "",
                 ocgOnly = "", tcgOnly = "", img = "";
 
@@ -354,14 +358,14 @@ public class MainParallel {
             /* do nothing */
         }
 
-        // first row is "Attribute" for monster, "Type" for spell/trap and "Types" for token
+        // first row is "Card type" for monster/spell/trap and "Types" for token
         boolean foundFirstRow = false;
         for (int i = 0; i < rows.size(); i++) {
             Element row = rows.get(i);
             Element header = row.getElementsByClass("cardtablerowheader").first();
             if (header == null) continue;
             String headerText = header.text();
-            if (!foundFirstRow && !headerText.equals("Attribute") && !headerText.equals("Type") && !headerText.equals("Types")) {
+            if (!foundFirstRow && !headerText.equals("Card type") && !headerText.equals("Types")) {
                 continue;
             }
             if (headerText.equals("Other card information") || headerText.equals("External links")) {
@@ -372,29 +376,35 @@ public class MainParallel {
                 foundFirstRow = true;
                 String data = row.getElementsByClass("cardtablerowdata").first().text().trim();
                 switch (headerText) {
-                    case "Attribute"                    : attribute       = data; break;
-                    case "Types"                        : types           = data; break;
-                    case "Type"                         : types           = data; break;
-                    case "Level"                        : level           = data; break;
-                    case "ATK / DEF"                    : {
+                    case "Attribute"                    : attribute       = data; break; // EARTH
+                    case "Card type"                    : cardType        = data; break; // Spell, Monster
+                    case "Types"                        : types           = data; break; // Token, Fairy / Effect
+                    case "Type"                         : types           = data; break; // Fiend
+                    case "Level"                        : level           = data; break; // 6
+                    case "ATK / DEF"                    : {                              // 2500 / 2000
                     	atk = data.split(" / ")[0];
                     	def = data.split(" / ")[1];
                     	break;
                 	}
-                    case "Card Number"                  : cardnum         = data; break;
-                    case "Passcode"                     : passcode        = data; break;
-                    case "Card effect types"            : effectTypes     = data; break;
-                    case "Materials"                    : materials       = data; break;
-                    case "Fusion Material"              : fusionMaterials = data; break;
-                    case "Rank"                         : rank            = data; break;
-                    case "Ritual Spell Card required"   : ritualSpell     = data; break;
-                    case "Pendulum Scale"               : pendulumScale   = data; break;
-                    case "Property"                     : property        = data; break;
-                    case "Summoned by the effect of"    : summonedBy      = data; break;
-                    case "Limitation Text"              : limitText       = data; break;
-                    case "Synchro Material"             : synchroMaterial = data; break;
-                    case "Ritual Monster required"      : ritualMonster   = data; break;
-                    case "Statuses":
+                    case "ATK / LINK"                    : {                              // 1400 / 2
+                        atk = data.split(" / ")[0];
+                        link = data.split(" / ")[1];
+                        break;
+                    }
+                    case "Passcode"                     : passcode        = data; break; // 64163367
+                    case "Card effect types"            : effectTypes     = data; break; // Continuous-like, Trigger-like
+                    case "Materials"                    : materials       = data; break; // "Genex Controller" + 1 or more non-Tuner WATER monsters
+                    case "Fusion Material"              : fusionMaterials = data; break; // "Blue-Eyes White Dragon"
+                    case "Rank"                         : rank            = data; break; // 4
+                    case "Ritual Spell Card required"   : ritualSpell     = data; break; // "Zera Ritual"
+                    case "Pendulum Scale"               : pendulumScale   = data; break; // 1
+                    case "Link Markers"                 : linkMarkers     = data; break; // Bottom-Left, Bottom-Right
+                    case "Property"                     : property        = data; break; // Continuous
+                    case "Summoned by the effect of"    : summonedBy      = data; break; // "Gorz the Emissary of Darkness"
+                    case "Limitation Text"              : limitText       = data; break; // This card cannot be in a Deck.
+                    case "Synchro Material"             : synchroMaterial = data; break; // "Genex Controller"
+                    case "Ritual Monster required"      : ritualMonster   = data; break; // "Zera the Mant"
+                    case "Statuses":                                                     // Legal
                         try {
                             String rowspan = header.attr("rowspan");
                             int numStatusRow;
@@ -472,33 +482,35 @@ public class MainParallel {
 
         psParms.setString(1,  cardName);
         psParms.setString(2,  attribute);
-        psParms.setString(3,  types);
-        psParms.setString(4,  level);
-        psParms.setString(5,  atk);
-        psParms.setString(6,  def);
-        psParms.setString(7,  cardnum);
+        psParms.setString(3,  cardType);
+        psParms.setString(4,  types);
+        psParms.setString(5,  level);
+        psParms.setString(6,  atk);
+        psParms.setString(7,  def);
         psParms.setString(8,  passcode);
         psParms.setString(9,  effectTypes);
-        psParms.setString(10,  materials);
+        psParms.setString(10, materials);
         psParms.setString(11, fusionMaterials);
         psParms.setString(12, rank);
         psParms.setString(13, ritualSpell);
         psParms.setString(14, pendulumScale);
-        psParms.setString(15, property);
-        psParms.setString(16, summonedBy);
-        psParms.setString(17, limitText);
-        psParms.setString(18, synchroMaterial);
-        psParms.setString(19, ritualMonster);
-        psParms.setString(20, ruling);
-        psParms.setString(21, tips);
-        psParms.setString(22, trivia);
-        psParms.setString(23, lore);
-        psParms.setString(24, ocgStatus);
-        psParms.setString(25, tcgAdvStatus);
-        psParms.setString(26, tcgTrnStatus);
-        psParms.setString(27, ocgOnly);
-        psParms.setString(28, tcgOnly);
-        psParms.setString(29, img);
+        psParms.setString(15, linkMarkers);
+        psParms.setString(16, link);
+        psParms.setString(17, property);
+        psParms.setString(18, summonedBy);
+        psParms.setString(19, limitText);
+        psParms.setString(20, synchroMaterial);
+        psParms.setString(21, ritualMonster);
+        psParms.setString(22, ruling);
+        psParms.setString(23, tips);
+        psParms.setString(24, trivia);
+        psParms.setString(25, lore);
+        psParms.setString(26, ocgStatus);
+        psParms.setString(27, tcgAdvStatus);
+        psParms.setString(28, tcgTrnStatus);
+        psParms.setString(29, ocgOnly);
+        psParms.setString(30, tcgOnly);
+        psParms.setString(31, img);
 
         psParms.executeUpdate();
         doneCounter.incrementAndGet();
