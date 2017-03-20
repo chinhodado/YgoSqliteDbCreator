@@ -71,6 +71,7 @@ public class MainParallel {
         Statement stmt = connection.createStatement();
         String sql = "CREATE TABLE Card " +
                 "( name              TEXT NOT NULL, " +
+                "  realName          TEXT, " +      // for cards like Darkfire Soldier #1
                 "  attribute         TEXT, " +      //              "Attribute"
                 "  cardType          TEXT, " +      //              "Card type"
                 "  types             TEXT, " +      //              "Types"
@@ -115,6 +116,7 @@ public class MainParallel {
         psParms.executeUpdate();
 
         stmt.executeUpdate("CREATE INDEX name_idx ON Card (name)");
+        stmt.executeUpdate("CREATE INDEX realName_idx ON Card (realName)");
         stmt.executeUpdate("CREATE INDEX type_idx ON Card (cardType)");
         stmt.executeUpdate("CREATE INDEX attribute_idx ON Card (attribute)");
         stmt.executeUpdate("CREATE INDEX level_idx ON Card (level)");
@@ -132,11 +134,11 @@ public class MainParallel {
         stmt.executeUpdate("CREATE INDEX booster_name_idx ON Booster (name)");
 
         psParms = connection.prepareStatement(
-                "INSERT INTO Card (name, attribute, cardType, types, level, atk, def, passcode, " +
+                "INSERT INTO Card (name, realName, attribute, cardType, types, level, atk, def, passcode, " +
                 "effectTypes, materials, fusionMaterials, rank, ritualSpell, " +
                 "pendulumScale, linkMarkers, link, property, summonedBy, limitText, synchroMaterial, ritualMonster, " +
                 "ruling, tips, trivia, lore, ocgStatus, tcgAdvStatus, tcgTrnStatus, ocgOnly, tcgOnly, img) " +
-                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
 
         psBoosterInsert = connection.prepareStatement(
                 "INSERT INTO Booster (name, enReleaseDate, jpReleaseDate, imgSrc) " +
@@ -301,7 +303,7 @@ public class MainParallel {
      * @throws SQLException when something's wrong with inserting the card into the database
      */
     private static void processCard(String cardName, AtomicInteger doneCounter) throws IOException, SQLException {
-        String attribute = "", cardType = "", types = "", level = "", atk = "", def = "", passcode = "",
+        String realName = "", attribute = "", cardType = "", types = "", level = "", atk = "", def = "", passcode = "",
                 effectTypes = "", materials = "", fusionMaterials = "", rank = "", ritualSpell = "",
                 pendulumScale = "", linkMarkers = "", link = "", property = "", summonedBy = "", limitText = "", synchroMaterial = "", ritualMonster = "",
                 ruling = "", tips = "", trivia = "", lore = "", ocgStatus = "", tcgAdvStatus = "", tcgTrnStatus = "",
@@ -337,7 +339,8 @@ public class MainParallel {
 
         if (ENABLE_VERBOSE_LOG) System.out.println("Fetching " + cardName + "'s general info");
         Document mainDom = Jsoup.parse(jsoupGet(cardUrl));
-        Elements rows = mainDom.getElementsByClass("cardtable").first().getElementsByClass("cardtablerow");
+        Element cardTable = mainDom.getElementsByClass("cardtable").first();
+        Elements rows = cardTable.getElementsByClass("cardtablerow");
 
         try {
             Element imgAnchor = mainDom.getElementsByClass("cardtable-cardimage").first().getElementsByClass("image-thumbnail").first();
@@ -348,14 +351,23 @@ public class MainParallel {
             /* do nothing */
         }
 
-        // first row is "Card type" for monster/spell/trap and "Types" for token
+        if (!rows.first().getElementsByClass("cardtablerowheader").first().text().equals("English")) {
+            logLine("First row in table for " + cardName + " is not English name!");
+        }
+
+        String inPageName = rows.first().getElementsByClass("cardtablerowdata").first().text();
+        if (!cardName.equals(inPageName)) {
+            realName = inPageName;
+        }
+
+        // first row is "Card type". Be careful with this as it may change!
         boolean foundFirstRow = false;
         for (int i = 0; i < rows.size(); i++) {
             Element row = rows.get(i);
             Element header = row.getElementsByClass("cardtablerowheader").first();
             if (header == null) continue;
             String headerText = header.text();
-            if (!foundFirstRow && !headerText.equals("Card type") && !headerText.equals("Types")) {
+            if (!foundFirstRow && !headerText.equals("Card type")) {
                 continue;
             }
             if (headerText.equals("Other card information") || headerText.equals("External links")) {
@@ -470,37 +482,14 @@ public class MainParallel {
             ocgOnly = "1";
         }
 
-        psParms.setString(1,  cardName);
-        psParms.setString(2,  attribute);
-        psParms.setString(3,  cardType);
-        psParms.setString(4,  types);
-        psParms.setString(5,  level);
-        psParms.setString(6,  atk);
-        psParms.setString(7,  def);
-        psParms.setString(8,  passcode);
-        psParms.setString(9,  effectTypes);
-        psParms.setString(10, materials);
-        psParms.setString(11, fusionMaterials);
-        psParms.setString(12, rank);
-        psParms.setString(13, ritualSpell);
-        psParms.setString(14, pendulumScale);
-        psParms.setString(15, linkMarkers);
-        psParms.setString(16, link);
-        psParms.setString(17, property);
-        psParms.setString(18, summonedBy);
-        psParms.setString(19, limitText);
-        psParms.setString(20, synchroMaterial);
-        psParms.setString(21, ritualMonster);
-        psParms.setString(22, ruling);
-        psParms.setString(23, tips);
-        psParms.setString(24, trivia);
-        psParms.setString(25, lore);
-        psParms.setString(26, ocgStatus);
-        psParms.setString(27, tcgAdvStatus);
-        psParms.setString(28, tcgTrnStatus);
-        psParms.setString(29, ocgOnly);
-        psParms.setString(30, tcgOnly);
-        psParms.setString(31, img);
+        String[] params = new String[] { cardName, realName, attribute, cardType, types, level, atk, def, passcode,
+                effectTypes, materials, fusionMaterials, rank, ritualSpell, pendulumScale, linkMarkers, link, property,
+                summonedBy, limitText, synchroMaterial, ritualMonster, ruling, tips, trivia, lore, ocgStatus, tcgAdvStatus,
+                tcgTrnStatus, ocgOnly, tcgOnly, img };
+
+        for (int i = 0; i < params.length; i++) {
+            psParms.setString(i+1, params[i]);
+        }
 
         psParms.executeUpdate();
         doneCounter.incrementAndGet();
@@ -638,6 +627,7 @@ public class MainParallel {
             if (cardName.trim().endsWith("(temp)")) {
                 continue;
             }
+
             if (!cardLinkTable.containsKey(cardName)) {
                 cardList.add(cardName);
                 String[] tmp = {myArray.getJSONObject(i).getString("url")}; // TODO: no need for array
