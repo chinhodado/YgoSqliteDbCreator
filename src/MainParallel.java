@@ -153,7 +153,7 @@ public class MainParallel {
         Scanner in = new Scanner(System.in);
 
         logLine("Processing card list");
-        List<String> workList = cardList; //.subList(3000, 3100); //for testing
+        List<String> workList = cardList;
         int totalCards = cardList.size();
         while (!workList.isEmpty()) {
             iteration++;
@@ -169,7 +169,7 @@ public class MainParallel {
         }
 
         logLine("Processing booster list");
-        workList = boosterList; //.subList(0, 1); //for testing
+        workList = boosterList;
         int totalBoosters = boosterList.size();
         while (!workList.isEmpty()) {
             iteration++;
@@ -506,29 +506,29 @@ public class MainParallel {
         if(cardtableCategories == null) return "";
 
         String archetype = "";
-        List<String> templist = new ArrayList<>(5); //I think 5 is good enough for an initial capacity
+        Set<String> templist = new HashSet<>(5); //I think 5 is enough for initial capacity
 
         /*things to note:
         - "Archetypes and series" will always come first if there is anything concerning archetypes
          */
         for(Element hlist : cardtableCategories.getElementsByClass("hlist")){
             Element dl = hlist.getElementsByTag("dl").first();
-            String dt = dl.getElementsByTag("dt").first().outerHtml();
+            String dt = dl.getElementsByTag("dt").first().text();
             Elements archetypes = null;
 
             //check if the left side contains the words archetypes
-            if(dt.contains("Archetype") || dt.contains("Archetypes") || dt.contains("archetypes")) archetypes = dl.getElementsByTag("dd");
-            if(archetypes == null) continue;
+            if(!dt.toLowerCase().contains("archetypes")) continue;
+
+            archetypes = dl.getElementsByTag("dd");
 
             //for multiple archetypes
             for(Element dd : archetypes){
-                String checkDuplicate = getCleanedHtml(dd.getElementsByAttribute("href").first(), false);
-                if(templist.contains(checkDuplicate)) continue;
-                templist.add(checkDuplicate);
+                String a = dd.getElementsByAttribute("href").first().text();
+                templist.add(a);
             }
         }
 
-        archetype = String.join(" / ", templist);
+        archetype = String.join(" , ", templist);
 
         return archetype;
     }
