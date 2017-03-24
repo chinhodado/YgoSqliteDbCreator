@@ -48,7 +48,7 @@ public class MainParallel {
     private static final AtomicInteger cardDoneCounter = new AtomicInteger();
     private static final AtomicInteger boosterDoneCounter = new AtomicInteger();
     private static int iteration = 0;
-    private static boolean cleanAllHtmlElements = false;
+    private static boolean rawText = false;
 
     // settings
     private static final boolean ENABLE_VERBOSE_LOG = false;
@@ -65,6 +65,8 @@ public class MainParallel {
         initializeBoosterList(null, true);
         logLine("Initializing OCG booster list");
         initializeBoosterList(null, false);
+        logLine("Do you want raw text? (y/n)");
+        checkIfWantRawText();
 
         Class.forName("org.sqlite.JDBC");
         Connection connection = DriverManager.getConnection("jdbc:sqlite::memory:");
@@ -151,7 +153,7 @@ public class MainParallel {
         Scanner in = new Scanner(System.in);
 
         logLine("Processing card list");
-        List<String> workList = cardList; //.subList(6000, 6030); //for testing
+        List<String> workList = cardList; //.subList(3000, 3100); //for testing
         int totalCards = cardList.size();
         while (!workList.isEmpty()) {
             iteration++;
@@ -167,7 +169,7 @@ public class MainParallel {
         }
 
         logLine("Processing booster list");
-        workList = boosterList; //.subList(0, 10); //for testing
+        workList = boosterList; //.subList(0, 1); //for testing
         int totalBoosters = boosterList.size();
         while (!workList.isEmpty()) {
             iteration++;
@@ -593,6 +595,9 @@ public class MainParallel {
 
         // remove useless tags
         text = text.replace("<span>", "").replace("</span>", "").replace("<a>", "").replace("</a>", "");
+        if(rawText){
+            text = Jsoup.parse(text).text();
+        }
         return text;
     }
 
@@ -729,6 +734,20 @@ public class MainParallel {
         DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
         Date date = new Date();
         System.out.println(dateFormat.format(date) + ": " + txt);
+    }
+
+    private static void checkIfWantRawText() {
+        Scanner scanner = new Scanner(System.in);
+        String yesno = "";
+
+        while(true){
+            yesno = scanner.nextLine();
+            if(yesno.equalsIgnoreCase("y") || yesno.equalsIgnoreCase("n")) break;
+        }
+
+        if(yesno.equalsIgnoreCase("y")) rawText = true;
+        else if(yesno.equalsIgnoreCase("n")) rawText = false;
+        else rawText = false;
     }
 
     interface Work {
