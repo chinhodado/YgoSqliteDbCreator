@@ -48,6 +48,7 @@ public class MainParallel {
     private static final AtomicInteger cardDoneCounter = new AtomicInteger();
     private static final AtomicInteger boosterDoneCounter = new AtomicInteger();
     private static int iteration = 0;
+    private static boolean cleanAllHtmlElements = false;
 
     // settings
     private static final boolean ENABLE_VERBOSE_LOG = false;
@@ -97,6 +98,7 @@ public class MainParallel {
                    "  tips        TEXT, "  +
                    "  trivia      TEXT, "  +
                    "  lore        TEXT, "  +
+                   "  archetype   TEXT, "  +
                    "  ocgStatus   TEXT, "  +
                    "  tcgAdvStatus TEXT, " +
                    "  tcgTrnStatus TEXT, " +
@@ -126,6 +128,7 @@ public class MainParallel {
         stmt.executeUpdate("CREATE INDEX atk_idx ON Card (atk)");
         stmt.executeUpdate("CREATE INDEX def_idx ON Card (def)");
         stmt.executeUpdate("CREATE INDEX property_idx ON Card (property)");
+        stmt.executeUpdate("CREATE INDEX archetype_idx ON Card (archetype)");
         stmt.executeUpdate("CREATE INDEX ocgStatus_idx ON Card (ocgStatus)");
         stmt.executeUpdate("CREATE INDEX tcgAdvStatus_idx ON Card (tcgAdvStatus)");
         stmt.executeUpdate("CREATE INDEX tcgTrnStatus_idx ON Card (tcgTrnStatus)");
@@ -137,8 +140,8 @@ public class MainParallel {
                 "INSERT INTO Card (name, realName, attribute, cardType, types, level, atk, def, passcode, " +
                 "effectTypes, materials, fusionMaterials, rank, ritualSpell, " +
                 "pendulumScale, linkMarkers, link, property, summonedBy, limitText, synchroMaterial, ritualMonster, " +
-                "ruling, tips, trivia, lore, ocgStatus, tcgAdvStatus, tcgTrnStatus, ocgOnly, tcgOnly, img) " +
-                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+                "ruling, tips, trivia, lore, archetype, ocgStatus, tcgAdvStatus, tcgTrnStatus, ocgOnly, tcgOnly, img) " +
+                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
 
         psBoosterInsert = connection.prepareStatement(
                 "INSERT INTO Booster (name, enReleaseDate, jpReleaseDate, imgSrc) " +
@@ -148,7 +151,7 @@ public class MainParallel {
         Scanner in = new Scanner(System.in);
 
         logLine("Processing card list");
-        List<String> workList = cardList;
+        List<String> workList = cardList.subList(4200, 4250);
         int totalCards = cardList.size();
         while (!workList.isEmpty()) {
             iteration++;
@@ -164,7 +167,7 @@ public class MainParallel {
         }
 
         logLine("Processing booster list");
-        workList = boosterList;
+        workList = boosterList.subList(0, 10);
         int totalBoosters = boosterList.size();
         while (!workList.isEmpty()) {
             iteration++;
@@ -306,7 +309,7 @@ public class MainParallel {
         String realName = "", attribute = "", cardType = "", types = "", level = "", atk = "", def = "", passcode = "",
                 effectTypes = "", materials = "", fusionMaterials = "", rank = "", ritualSpell = "",
                 pendulumScale = "", linkMarkers = "", link = "", property = "", summonedBy = "", limitText = "", synchroMaterial = "", ritualMonster = "",
-                ruling = "", tips = "", trivia = "", lore = "", ocgStatus = "", tcgAdvStatus = "", tcgTrnStatus = "",
+                ruling = "", tips = "", trivia = "", lore = "", archetype = "", ocgStatus = "", tcgAdvStatus = "", tcgTrnStatus = "",
                 ocgOnly = "", tcgOnly = "", img = "";
 
         String cardLink = cardLinkTable.get(cardName)[0];
@@ -473,6 +476,7 @@ public class MainParallel {
         }
 
         lore = getCardLore(mainDom);
+        archetype = getArchetype(mainDom);
 
         if (tcgCards.contains(cardName) && !ocgCards.contains(cardName)) {
             tcgOnly = "1";
@@ -484,7 +488,7 @@ public class MainParallel {
 
         String[] params = new String[] { cardName, realName, attribute, cardType, types, level, atk, def, passcode,
                 effectTypes, materials, fusionMaterials, rank, ritualSpell, pendulumScale, linkMarkers, link, property,
-                summonedBy, limitText, synchroMaterial, ritualMonster, ruling, tips, trivia, lore, ocgStatus, tcgAdvStatus,
+                summonedBy, limitText, synchroMaterial, ritualMonster, ruling, tips, trivia, lore, archetype, ocgStatus, tcgAdvStatus,
                 tcgTrnStatus, ocgOnly, tcgOnly, img };
 
         for (int i = 0; i < params.length; i++) {
@@ -493,6 +497,40 @@ public class MainParallel {
 
         psParms.executeUpdate();
         doneCounter.incrementAndGet();
+    }
+
+    private static String getArchetype(Document dom){
+        Element cardtableCategories = dom.getElementsByClass("cardtable-categories").first();
+        if(cardtableCategories == null) return "";
+        String outerHtml = cardtableCategories.outerHtml();
+        //can be shortened to (!(bool && bool && bool)) but this way is better for intent
+        if(!outerHtml.contains("Archetype") || !outerHtml.contains("Archetypes") || !outerHtml.contains("archetypes")) return "";
+
+        String archetype = "";
+        List<String> templist = new ArrayList<>(5); //I think 5 is good enough for an initial capacity
+
+        /*things to note:
+        - "Archetypes and series" will always come first if there is anything concerning archetypes
+         */
+        for(Element hlist : cardtableCategories.getElementsByClass("hlist")){
+            Element dl = hlist.getElementsByTag("dl").first();
+            String dt = dl.getElementsByTag("dt").first().outerHtml();
+            Elements archetypes = null;
+
+            //check if the left side contains the words archetypes
+            if(dt.contains("Archetype") || dt.contains("Archetypes") || dt.contains("archetypes")) archetypes = dl.getElementsByTag("dd");
+            if(archetypes == null) continue;
+
+            for(Element dd : archetypes){
+                String checkDuplicate = dd.getElementsByAttribute("href").text().trim();
+                if(templist.contains(checkDuplicate)) continue;
+                templist.add(checkDuplicate);
+            }
+        }
+
+        archetype = String.join(" / ", templist);
+
+        return archetype;
     }
 
     private static String getCardLore(Document dom) {
