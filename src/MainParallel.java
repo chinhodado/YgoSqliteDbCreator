@@ -506,7 +506,7 @@ public class MainParallel {
         if(cardtableCategories == null) return "";
 
         String archetype = "";
-        Set<String> templist = new HashSet<>(5); //I think 5 is enough for initial capacity
+        Set<String> tempset = new HashSet<>(5); //I think 5 is enough for initial capacity
 
         /*things to note:
         - "Archetypes and series" will always come first if there is anything concerning archetypes
@@ -524,11 +524,11 @@ public class MainParallel {
             //for multiple archetypes
             for(Element dd : archetypes){
                 String a = dd.getElementsByAttribute("href").first().text();
-                templist.add(a);
+                tempset.add(a);
             }
         }
 
-        archetype = String.join(" , ", templist);
+        archetype = String.join(" , ", tempset);
 
         return archetype;
     }
