@@ -514,7 +514,7 @@ public class MainParallel {
         for(Element hlist : cardtableCategories.getElementsByClass("hlist")){
             Element dl = hlist.getElementsByTag("dl").first();
             String dt = dl.getElementsByTag("dt").first().text();
-            Elements archetypes = null;
+            Elements archetypes;
 
             //check if the left side contains the words archetypes
             if(!dt.toLowerCase().contains("archetypes")) continue;
