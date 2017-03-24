@@ -151,7 +151,7 @@ public class MainParallel {
         Scanner in = new Scanner(System.in);
 
         logLine("Processing card list");
-        List<String> workList = cardList.subList(4200, 4250);
+        List<String> workList = cardList.subList(4217, 4250);
         int totalCards = cardList.size();
         while (!workList.isEmpty()) {
             iteration++;
@@ -502,9 +502,6 @@ public class MainParallel {
     private static String getArchetype(Document dom){
         Element cardtableCategories = dom.getElementsByClass("cardtable-categories").first();
         if(cardtableCategories == null) return "";
-        String outerHtml = cardtableCategories.outerHtml();
-        //can be shortened to (!(bool && bool && bool)) but this way is better for intent
-        if(!outerHtml.contains("Archetype") || !outerHtml.contains("Archetypes") || !outerHtml.contains("archetypes")) return "";
 
         String archetype = "";
         List<String> templist = new ArrayList<>(5); //I think 5 is good enough for an initial capacity
@@ -521,8 +518,9 @@ public class MainParallel {
             if(dt.contains("Archetype") || dt.contains("Archetypes") || dt.contains("archetypes")) archetypes = dl.getElementsByTag("dd");
             if(archetypes == null) continue;
 
+            //for multiple archetypes
             for(Element dd : archetypes){
-                String checkDuplicate = dd.getElementsByAttribute("href").text().trim();
+                String checkDuplicate = getCleanedHtml(dd.getElementsByAttribute("href").first(), false);
                 if(templist.contains(checkDuplicate)) continue;
                 templist.add(checkDuplicate);
             }
