@@ -48,6 +48,7 @@ public class MainParallel {
     private static final AtomicInteger cardDoneCounter = new AtomicInteger();
     private static final AtomicInteger boosterDoneCounter = new AtomicInteger();
     private static int iteration = 0;
+    private static boolean rawText = false;
 
     // settings
     private static final boolean ENABLE_VERBOSE_LOG = false;
@@ -64,6 +65,8 @@ public class MainParallel {
         initializeBoosterList(null, true);
         logLine("Initializing OCG booster list");
         initializeBoosterList(null, false);
+        logLine("Do you want raw text? (y/n)");
+        checkIfWantRawText();
 
         Class.forName("org.sqlite.JDBC");
         Connection connection = DriverManager.getConnection("jdbc:sqlite::memory:");
@@ -97,6 +100,7 @@ public class MainParallel {
                    "  tips        TEXT, "  +
                    "  trivia      TEXT, "  +
                    "  lore        TEXT, "  +
+                   "  archetype   TEXT, "  +
                    "  ocgStatus   TEXT, "  +
                    "  tcgAdvStatus TEXT, " +
                    "  tcgTrnStatus TEXT, " +
@@ -126,6 +130,7 @@ public class MainParallel {
         stmt.executeUpdate("CREATE INDEX atk_idx ON Card (atk)");
         stmt.executeUpdate("CREATE INDEX def_idx ON Card (def)");
         stmt.executeUpdate("CREATE INDEX property_idx ON Card (property)");
+        stmt.executeUpdate("CREATE INDEX archetype_idx ON Card (archetype)");
         stmt.executeUpdate("CREATE INDEX ocgStatus_idx ON Card (ocgStatus)");
         stmt.executeUpdate("CREATE INDEX tcgAdvStatus_idx ON Card (tcgAdvStatus)");
         stmt.executeUpdate("CREATE INDEX tcgTrnStatus_idx ON Card (tcgTrnStatus)");
@@ -137,8 +142,8 @@ public class MainParallel {
                 "INSERT INTO Card (name, realName, attribute, cardType, types, level, atk, def, passcode, " +
                 "effectTypes, materials, fusionMaterials, rank, ritualSpell, " +
                 "pendulumScale, linkMarkers, link, property, summonedBy, limitText, synchroMaterial, ritualMonster, " +
-                "ruling, tips, trivia, lore, ocgStatus, tcgAdvStatus, tcgTrnStatus, ocgOnly, tcgOnly, img) " +
-                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+                "ruling, tips, trivia, lore, archetype, ocgStatus, tcgAdvStatus, tcgTrnStatus, ocgOnly, tcgOnly, img) " +
+                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
 
         psBoosterInsert = connection.prepareStatement(
                 "INSERT INTO Booster (name, enReleaseDate, jpReleaseDate, imgSrc) " +
@@ -306,7 +311,7 @@ public class MainParallel {
         String realName = "", attribute = "", cardType = "", types = "", level = "", atk = "", def = "", passcode = "",
                 effectTypes = "", materials = "", fusionMaterials = "", rank = "", ritualSpell = "",
                 pendulumScale = "", linkMarkers = "", link = "", property = "", summonedBy = "", limitText = "", synchroMaterial = "", ritualMonster = "",
-                ruling = "", tips = "", trivia = "", lore = "", ocgStatus = "", tcgAdvStatus = "", tcgTrnStatus = "",
+                ruling = "", tips = "", trivia = "", lore = "", archetype = "", ocgStatus = "", tcgAdvStatus = "", tcgTrnStatus = "",
                 ocgOnly = "", tcgOnly = "", img = "";
 
         String cardLink = cardLinkTable.get(cardName)[0];
@@ -473,6 +478,7 @@ public class MainParallel {
         }
 
         lore = getCardLore(mainDom);
+        archetype = getArchetype(mainDom);
 
         if (tcgCards.contains(cardName) && !ocgCards.contains(cardName)) {
             tcgOnly = "1";
@@ -484,7 +490,7 @@ public class MainParallel {
 
         String[] params = new String[] { cardName, realName, attribute, cardType, types, level, atk, def, passcode,
                 effectTypes, materials, fusionMaterials, rank, ritualSpell, pendulumScale, linkMarkers, link, property,
-                summonedBy, limitText, synchroMaterial, ritualMonster, ruling, tips, trivia, lore, ocgStatus, tcgAdvStatus,
+                summonedBy, limitText, synchroMaterial, ritualMonster, ruling, tips, trivia, lore, archetype, ocgStatus, tcgAdvStatus,
                 tcgTrnStatus, ocgOnly, tcgOnly, img };
 
         for (int i = 0; i < params.length; i++) {
@@ -493,6 +499,38 @@ public class MainParallel {
 
         psParms.executeUpdate();
         doneCounter.incrementAndGet();
+    }
+
+    private static String getArchetype(Document dom){
+        Element cardtableCategories = dom.getElementsByClass("cardtable-categories").first();
+        if(cardtableCategories == null) return "";
+
+        String archetype = "";
+        Set<String> tempset = new HashSet<>(5); //I think 5 is enough for initial capacity
+
+        /*things to note:
+        - "Archetypes and series" will always come first if there is anything concerning archetypes
+         */
+        for(Element hlist : cardtableCategories.getElementsByClass("hlist")){
+            Element dl = hlist.getElementsByTag("dl").first();
+            String dt = dl.getElementsByTag("dt").first().text();
+            Elements archetypes;
+
+            //check if the left side contains the words archetypes
+            if(!dt.toLowerCase().contains("archetypes")) continue;
+
+            archetypes = dl.getElementsByTag("dd");
+
+            //for multiple archetypes
+            for(Element dd : archetypes){
+                String a = dd.getElementsByAttribute("href").first().text();
+                tempset.add(a);
+            }
+        }
+
+        archetype = String.join(" , ", tempset);
+
+        return archetype;
     }
 
     private static String getCardLore(Document dom) {
@@ -557,6 +595,9 @@ public class MainParallel {
 
         // remove useless tags
         text = text.replace("<span>", "").replace("</span>", "").replace("<a>", "").replace("</a>", "");
+        if(rawText){
+            text = Jsoup.parse(text).text();
+        }
         return text;
     }
 
@@ -693,6 +734,20 @@ public class MainParallel {
         DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
         Date date = new Date();
         System.out.println(dateFormat.format(date) + ": " + txt);
+    }
+
+    private static void checkIfWantRawText() {
+        Scanner scanner = new Scanner(System.in);
+        String yesno = "";
+
+        while(true){
+            yesno = scanner.nextLine();
+            if(yesno.equalsIgnoreCase("y") || yesno.equalsIgnoreCase("n")) break;
+        }
+
+        if(yesno.equalsIgnoreCase("y")) rawText = true;
+        else if(yesno.equalsIgnoreCase("n")) rawText = false;
+        else rawText = false;
     }
 
     interface Work {
