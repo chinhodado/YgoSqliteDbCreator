@@ -401,7 +401,7 @@ public class MainParallel {
                     case "Link Markers"                 : linkMarkers     = data; break; // Bottom-Left, Bottom-Right
                     case "Property"                     : property        = data; break; // Continuous
                     case "Summoned by the effect of"    : summonedBy      = data; break; // "Gorz the Emissary of Darkness"
-                    case "Limitation Text"              : limitText       = data; break; // This card cannot be in a Deck.
+                    case "Limitation text"              : limitText       = data; break; // This card cannot be in a Deck.
                     case "Synchro Material"             : synchroMaterial = data; break; // "Genex Controller"
                     case "Ritual Monster required"      : ritualMonster   = data; break; // "Zera the Mant"
                     case "Statuses":                                                     // Legal
@@ -499,11 +499,8 @@ public class MainParallel {
         if (cardtableCategories == null) return "";
 
         String archetype = "";
-        Set<String> tempset = new HashSet<>(5); //I think 5 is enough for initial capacity
+        Set<String> tempset = new HashSet<>();
 
-        /*things to note:
-        - "Archetypes and series" will always come first if there is anything concerning archetypes
-         */
         for (Element hlist : cardtableCategories.getElementsByClass("hlist")) {
             Element dl = hlist.getElementsByTag("dl").first();
             String dt = dl.getElementsByTag("dt").first().text();
@@ -731,7 +728,6 @@ public class MainParallel {
 
     //for possible future launch parameters
     private static void parseArgs(String[] args) {
-        //I wasn't too sure if performance mattered here, but I converted array to list
         List<String> argsList = Arrays.asList(args);
         if (argsList.contains("--raw")) {
             rawText = Boolean.parseBoolean(argsList.get(argsList.indexOf("--raw") + 1));
