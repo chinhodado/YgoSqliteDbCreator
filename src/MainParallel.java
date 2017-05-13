@@ -104,7 +104,8 @@ public class MainParallel {
 
         sql = "CREATE TABLE metadata (dataCreated TEXT NOT NULL)";
         stmt.executeUpdate(sql);
-        sql = "CREATE TABLE Booster (name TEXT NOT NULL, enReleaseDate TEXT, jpReleaseDate TEXT, imgSrc TEXT)";
+        sql = "CREATE TABLE Booster (name TEXT NOT NULL, enReleaseDate TEXT, jpReleaseDate TEXT, " +
+                "skReleaseDate TEXT, worldwideReleaseDate TEXT, imgSrc TEXT)";
         stmt.executeUpdate(sql);
 
         String date = new SimpleDateFormat("yyyyMMdd").format(new Date());
@@ -139,8 +140,8 @@ public class MainParallel {
                 "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
 
         psBoosterInsert = connection.prepareStatement(
-                "INSERT INTO Booster (name, enReleaseDate, jpReleaseDate, imgSrc) " +
-                        "VALUES (?,?,?,?)");
+                "INSERT INTO Booster (name, enReleaseDate, jpReleaseDate, skReleaseDate, worldwideReleaseDate, imgSrc) " +
+                        "VALUES (?,?,?,?,?,?)");
 
         logLine("Getting and processing Yugioh Wikia articles using " + NUM_THREAD + " threads.");
         Scanner in = new Scanner(System.in);
@@ -272,7 +273,7 @@ public class MainParallel {
     }
 
     private static void processBooster(String boosterName, AtomicInteger doneCounter) throws IOException, SQLException {
-        String enReleaseDate, jpReleaseDate, imgSrc;
+        String enReleaseDate, jpReleaseDate, skReleaseDate, worldwideReleaseDate, imgSrc;
 
         String boosterLink = boosterLinkTable.get(boosterName)[0];
         String boosterUrl = "http://yugioh.wikia.com" + boosterLink;
@@ -283,12 +284,16 @@ public class MainParallel {
 
         enReleaseDate = parser.getEnglishReleaseDate();
         jpReleaseDate = parser.getJapaneseReleaseDate();
+        skReleaseDate = parser.getSouthKoreaReleaseDate();
+        worldwideReleaseDate = parser.getWorldwideReleaseDate();
         imgSrc = getShortenedImageLink(parser.getImageLink());
 
         psBoosterInsert.setString(1, boosterName);
         psBoosterInsert.setString(2, enReleaseDate);
         psBoosterInsert.setString(3, jpReleaseDate);
-        psBoosterInsert.setString(4, imgSrc);
+        psBoosterInsert.setString(4, skReleaseDate);
+        psBoosterInsert.setString(5, worldwideReleaseDate);
+        psBoosterInsert.setString(6, imgSrc);
 
         psBoosterInsert.executeUpdate();
         doneCounter.incrementAndGet();

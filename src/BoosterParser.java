@@ -19,44 +19,38 @@ public class BoosterParser {
     }
 
     public String getJapaneseReleaseDate() {
-        try {
-            Elements rows = dom.getElementsByClass("infobox").first().getElementsByTag("tr");
-            for (int i = 0; i < rows.size(); i++) {
-                Element row = rows.get(i);
-                if (row.text().equals("Release dates")) {
-                    for (int j = i + 1; j < rows.size(); j++) {
-                        Elements headers = rows.get(j).getElementsByTag("th");
-                        if (headers.size() > 0 && headers.get(0).text().equals("Japanese")) {
-                            String date = rows.get(j).getElementsByTag("td").first().text();
-                            return date;
-                        }
-                    }
-                }
-            }
-        }
-        catch (Exception e) {
-        }
-
-        return null;
+        return getReleaseDate("Japan");
     }
 
     public String getEnglishReleaseDate() {
+        return getReleaseDate("North America");
+    }
+
+    public String getSouthKoreaReleaseDate() {
+        return getReleaseDate("South Korea");
+    }
+
+    public String getWorldwideReleaseDate() {
+        return getReleaseDate("Worldwide");
+    }
+
+    public String getReleaseDate(String type) {
         try {
-            Elements rows = dom.getElementsByClass("infobox").first().getElementsByTag("tr");
-            for (int i = 0; i < rows.size(); i++) {
-                Element row = rows.get(i);
-                if (row.text().equals("Release dates")) {
+            Elements sections = dom.getElementsByClass("portable-infobox").first().select("section.pi-item");
+            for (Element section : sections) {
+                if (section.text().startsWith("Release dates")) { // heuristic
                     String date = null;
-                    for (int j = i + 1; j < rows.size(); j++) {
-                        Elements headers = rows.get(j).getElementsByTag("th");
+                    Elements rows = section.select("div.pi-item");
+                    for (Element row : rows) {
+                        Elements headers = row.select("h3.pi-data-label");
                         if (headers.size() > 0) {
                             Element header = headers.get(0);
 
-                            if (header.text().startsWith("English")) {
-                                date = rows.get(j).getElementsByTag("td").first().text();
+                            if (header.text().startsWith(type)) {
+                                date = row.select("div.pi-data-value").first().text();
                             }
 
-                            if (header.text().equals("English (na)")){
+                            if (header.text().equals(type)){
                                 return date;
                             }
                         }
@@ -67,6 +61,7 @@ public class BoosterParser {
             }
         }
         catch (Exception e) {
+//            e.printStackTrace();
         }
 
         return null;
