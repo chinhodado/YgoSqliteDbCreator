@@ -4,26 +4,26 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.jsoup.Jsoup;
-import org.jsoup.nodes.Attribute;
-import org.jsoup.nodes.Attributes;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-import org.jsoup.nodes.Node;
-import org.jsoup.select.Elements;
+import parser.BoosterParser;
+import parser.Card;
+import parser.CardParser;
+import parser.Util;
+
+import static parser.Util.jsoupGet;
+import static parser.Util.logLine;
 
 public class MainParallel {
     private static List<String> cardList = new ArrayList<>(8192);
@@ -70,7 +70,7 @@ public class MainParallel {
                 "  realName          TEXT, " +      // for cards like Darkfire Soldier #1
                 "  attribute         TEXT, " +      //              "Attribute"
                 "  cardType          TEXT, " +      //              "Card type"
-                "  types             TEXT, " +      //              "Types"
+                "  types             TEXT, " +      //              "Types" or "Type"
                 "  level             INTEGER, " +   //              "Level"
                 "  atk               INTEGER, " +   //              "ATK/DEF"
                 "  def               INTEGER, " +   //              "ATK/DEF"
@@ -286,7 +286,7 @@ public class MainParallel {
         jpReleaseDate = parser.getJapaneseReleaseDate();
         skReleaseDate = parser.getSouthKoreaReleaseDate();
         worldwideReleaseDate = parser.getWorldwideReleaseDate();
-        imgSrc = getShortenedImageLink(parser.getImageLink());
+        imgSrc = Util.getShortenedImageLink(parser.getImageLink());
 
         psBoosterInsert.setString(1, boosterName);
         psBoosterInsert.setString(2, enReleaseDate);
@@ -306,11 +306,7 @@ public class MainParallel {
      * @throws SQLException when something's wrong with inserting the card into the database
      */
     private static void processCard(String cardName, AtomicInteger doneCounter) throws IOException, SQLException {
-        String realName = "", attribute = "", cardType = "", types = "", level = "", atk = "", def = "", passcode = "",
-                effectTypes = "", materials = "", fusionMaterials = "", rank = "", ritualSpell = "",
-                pendulumScale = "", linkMarkers = "", link = "", property = "", summonedBy = "", limitText = "", synchroMaterial = "", ritualMonster = "",
-                ruling = "", tips = "", trivia = "", lore = "", archetype = "", ocgStatus = "", tcgAdvStatus = "", tcgTrnStatus = "",
-                ocgOnly = "", tcgOnly = "", img = "";
+        String ruling = "", tips = "", trivia = "";
 
         String cardLink = cardLinkTable.get(cardName)[0];
         String cardUrl = "http://yugioh.wikia.com" + cardLink;
@@ -342,142 +338,10 @@ public class MainParallel {
 
         if (ENABLE_VERBOSE_LOG) System.out.println("Fetching " + cardName + "'s general info");
         Document mainDom = Jsoup.parse(jsoupGet(cardUrl));
-        Element cardTable = mainDom.getElementsByClass("cardtable").first();
-        Elements rows = cardTable.getElementsByClass("cardtablerow");
+        CardParser parser = new CardParser(cardName, mainDom);
+        Card card = parser.parse();
 
-        try {
-            Element imgAnchor = mainDom.getElementsByClass("cardtable-cardimage").first().getElementsByClass("image-thumbnail").first();
-            String imgUrl = imgAnchor.attr("href");
-            img = getShortenedImageLink(imgUrl);
-        }
-        catch (Exception e) {
-            /* do nothing */
-        }
-
-        if (!rows.first().getElementsByClass("cardtablerowheader").first().text().equals("English")) {
-            logLine("First row in table for " + cardName + " is not English name!");
-        }
-
-        String inPageName = rows.first().getElementsByClass("cardtablerowdata").first().text();
-        if (!cardName.equals(inPageName)) {
-            realName = inPageName;
-        }
-
-        // first row is "Card type". Be careful with this as it may change!
-        boolean foundFirstRow = false;
-        for (int i = 0; i < rows.size(); i++) {
-            Element row = rows.get(i);
-            Element header = row.getElementsByClass("cardtablerowheader").first();
-            if (header == null) continue;
-            String headerText = header.text();
-            if (!foundFirstRow && !headerText.equals("Card type")) {
-                continue;
-            }
-            if (headerText.equals("Other card information") || headerText.equals("External links")) {
-                // we have reached the end for some reasons, exit now
-                break;
-            }
-            else {
-                foundFirstRow = true;
-                String data = row.getElementsByClass("cardtablerowdata").first().text().trim();
-                switch (headerText) {
-                    case "Attribute"                    : attribute       = data; break; // EARTH
-                    case "Card type"                    : cardType        = data; break; // Spell, Monster
-                    case "Types"                        : types           = data; break; // Token, Fairy / Effect
-                    case "Type"                         : types           = data; break; // Fiend
-                    case "Level"                        : level           = data; break; // 6
-                    case "ATK / DEF"                    : {                              // 2500 / 2000
-                    	atk = data.split(" / ")[0];
-                    	def = data.split(" / ")[1];
-                    	break;
-                	}
-                    case "ATK / LINK"                    : {                              // 1400 / 2
-                        atk = data.split(" / ")[0];
-                        link = data.split(" / ")[1];
-                        break;
-                    }
-                    case "Passcode"                     : passcode        = data; break; // 64163367
-                    case "Card effect types"            : effectTypes     = data; break; // Continuous-like, Trigger-like
-                    case "Materials"                    : materials       = data; break; // "Genex Controller" + 1 or more non-Tuner WATER monsters
-                    case "Fusion Material"              : fusionMaterials = data; break; // "Blue-Eyes White Dragon"
-                    case "Rank"                         : rank            = data; break; // 4
-                    case "Ritual Spell Card required"   : ritualSpell     = data; break; // "Zera Ritual"
-                    case "Pendulum Scale"               : pendulumScale   = data; break; // 1
-                    case "Link Markers"                 : linkMarkers     = data; break; // Bottom-Left, Bottom-Right
-                    case "Property"                     : property        = data; break; // Continuous
-                    case "Summoned by the effect of"    : summonedBy      = data; break; // "Gorz the Emissary of Darkness"
-                    case "Limitation text"              : limitText       = data; break; // This card cannot be in a Deck.
-                    case "Synchro Material"             : synchroMaterial = data; break; // "Genex Controller"
-                    case "Ritual Monster required"      : ritualMonster   = data; break; // "Zera the Mant"
-                    case "Statuses":                                                     // Legal
-                        try {
-                            String rowspan = header.attr("rowspan");
-                            int numStatusRow;
-                            if (rowspan != null && !rowspan.equals("")) {
-                                numStatusRow = Integer.parseInt(rowspan);
-                            }
-                            else {
-                                numStatusRow = 1;
-                            }
-
-                            for (int r = 0; r < numStatusRow; r++) {
-                                Element statusRow = rows.get(i + r);
-                                String statusRowData = statusRow.getElementsByClass("cardtablerowdata").first().text().trim();
-                                String status;
-                                if (statusRowData.contains("Not yet released")) {
-                                    status = "Not yet released";
-                                }
-                                else {
-                                    status = statusRowData.split(" ")[0];
-                                }
-
-                                if (status.equals("Unlimited")) {
-                                    status = "U";
-                                }
-
-                                if (numStatusRow == 1) {
-                                    ocgStatus = status;
-                                    tcgAdvStatus = status;
-                                    tcgTrnStatus = status;
-                                }
-                                else {
-                                    if (statusRowData.contains("OCG")) {
-                                        ocgStatus = status;
-                                    }
-
-                                    if (statusRowData.contains("Advanced")) {
-                                        tcgAdvStatus = status;
-                                    }
-
-                                    if (statusRowData.contains("Traditional")) {
-                                        tcgTrnStatus = status;
-                                    }
-                                }
-                            }
-
-                            // skip through the status rows
-                            i = i + numStatusRow - 1;
-                        }
-                        catch (Exception e) {
-                            System.out.println("Error getting status: " + cardName);
-                            e.printStackTrace();
-                        }
-                        break;
-                    default:
-                        System.out.println("Attribute not found: " + headerText);
-                        break;
-                }
-
-                // rely on the assumption that Statuses is always the last info row
-                if (headerText.equals("Statuses")) {
-                    break;
-                }
-            }
-        }
-
-        lore = getCardLore(mainDom);
-        archetype = getArchetype(mainDom);
-
+        String ocgOnly = "", tcgOnly = "";
         if (tcgCards.contains(cardName) && !ocgCards.contains(cardName)) {
             tcgOnly = "1";
         }
@@ -486,10 +350,13 @@ public class MainParallel {
             ocgOnly = "1";
         }
 
-        String[] params = new String[] { cardName, realName, attribute, cardType, types, level, atk, def, passcode,
-                effectTypes, materials, fusionMaterials, rank, ritualSpell, pendulumScale, linkMarkers, link, property,
-                summonedBy, limitText, synchroMaterial, ritualMonster, ruling, tips, trivia, lore, archetype, ocgStatus, tcgAdvStatus,
-                tcgTrnStatus, ocgOnly, tcgOnly, img };
+        String[] params = new String[] { cardName, card.getRealName(), card.getAttribute(), card.getCardType(),
+                card.getTypes(), card.getLevel(), card.getAtk(), card.getDef(), card.getPasscode(),
+                card.getEffectTypes(), card.getMaterials(), card.getFusionMaterials(), card.getRank(), card.getRitualSpell(),
+                card.getPendulumScale(), card.getLinkMarkers(), card.getLink(), card.getProperty(), card.getSummonedBy(),
+                card.getLimitText(), card.getSynchroMaterial(), card.getRitualMonster(), ruling, tips, trivia,
+                card.getLore(), card.getArchetype(), card.getOcgStatus(), card.getTcgAdvStatus(), card.getTcgTrnStatus(),
+                ocgOnly, tcgOnly, card.getImg() };
 
         for (int i = 0; i < params.length; i++) {
             psParms.setString(i+1, params[i]);
@@ -499,145 +366,9 @@ public class MainParallel {
         doneCounter.incrementAndGet();
     }
 
-    private static String getArchetype(Document dom){
-        Element cardtableCategories = dom.getElementsByClass("cardtable-categories").first();
-        if (cardtableCategories == null) return "";
-
-        String archetype = "";
-        Set<String> tempset = new HashSet<>();
-
-        for (Element hlist : cardtableCategories.getElementsByClass("hlist")) {
-            Element dl = hlist.getElementsByTag("dl").first();
-            String dt = dl.getElementsByTag("dt").first().text();
-            Elements archetypes;
-
-            //check if the left side contains the words archetypes
-            if (!dt.toLowerCase().contains("archetypes")) continue;
-
-            archetypes = dl.getElementsByTag("dd");
-
-            //for multiple archetypes
-            for (Element dd : archetypes) {
-                String a = dd.getElementsByAttribute("href").first().text();
-                tempset.add(a);
-            }
-        }
-
-        archetype = String.join(" , ", tempset);
-
-        return archetype;
-    }
-
-    private static String getCardLore(Document dom) {
-        Element effectBox = dom.getElementsByClass("cardtablespanrow").first().getElementsByClass("navbox-list").first();
-        String effect = getCleanedHtml(effectBox, false);
-
-        // turn <dl> into <p> and <dt> into <b>
-        effect = effect.replace("<dl", "<p").replace("dl>", "p>").replace("<dt", "<b").replace("dt>", "b>");
-        return effect;
-    }
-
     private static String getCardInfoGeneric(Document dom, boolean isTipsPage) {
         Element content = dom.getElementById("mw-content-text");
-        return getCleanedHtml(content, isTipsPage);
-    }
-
-    private static String getCleanedHtml(Element content, boolean isTipPage) {
-        Elements navboxes = content.select("table.navbox");
-        if (!navboxes.isEmpty()) {navboxes.first().remove();} // remove the navigation box
-
-        content.select("script").remove();               // remove <script> tags
-        content.select("noscript").remove();             // remove <noscript> tags
-        content.select("#toc").remove();                 // remove the table of content
-        content.select("sup").remove();                  // remove the sup tags
-        content.select("#References").remove();          // remove the reference header
-        content.select(".references").remove();          // remove the references section
-        content.select(".mbox-image").remove();          // remove the image in the "previously official ruling" box
-
-        // remove the "Previously Official Rulings" notice
-        Elements tables = content.getElementsByTag("table");
-        for (Element table : tables) {
-            if (table.text().startsWith("These TCG rulings were issued by Upper Deck Entertainment")) {
-                // TODO: may want to put a placeholder here so we know to put it back in later
-                table.remove();
-            }
-        }
-
-        if (isTipPage) {
-        	// remove the "lists" tables
-        	boolean foundListsHeader = false;
-        	Elements children = content.select("#mw-content-text").first().children();
-        	for (Element child : children) {
-        		if ((child.tagName().equals("h2") || child.tagName().equals("h3")) && child.text().contains("List")) {
-        			foundListsHeader = true;
-        			child.remove();
-        		}
-        		else if (foundListsHeader && (child.tagName().equals("h2") || child.tagName().equals("h3"))) {
-        			break;
-        		}
-        		else if (foundListsHeader) {
-        			child.remove();
-        		}
-        	}
-        }
-
-        removeComments(content);                         // remove comments
-        removeAttributes(content);                       // remove all attributes. Has to be at the end, otherwise can't grab id, etc.
-        removeEmptyTags(content);                        // remove all empty tags
-
-        // convert to text
-        String text = content.html();
-
-        // remove useless tags
-        text = text.replace("<span>", "").replace("</span>", "").replace("<a>", "").replace("</a>", "");
-        if (rawText) {
-            text = Jsoup.parse(text).text();
-        }
-        return text;
-    }
-
-    private static final Pattern IMG_URL_PATTERN =
-            Pattern.compile("http(s?)://vignette(\\d)\\.wikia\\.nocookie\\.net/yugioh/images/./(.*?)/(.*?)/");
-    private static String getShortenedImageLink(String imgUrl) {
-        try {
-            Matcher m = IMG_URL_PATTERN.matcher(imgUrl);
-            m.find();
-            String img = m.group(2) + m.group(3) + m.group(4);
-            return img;
-        }
-        catch (Exception e) {
-            return null;
-        }
-    }
-
-    private static void removeComments(Node node) {
-        for (int i = 0; i < node.childNodes().size();) {
-            Node child = node.childNode(i);
-            if (child.nodeName().equals("#comment"))
-                child.remove();
-            else {
-                removeComments(child);
-                i++;
-            }
-        }
-    }
-
-    private static void removeAttributes(Element doc) {
-        Elements el = doc.getAllElements();
-        for (Element e : el) {
-            Attributes at = e.attributes();
-            for (Attribute a : at) {
-                e.removeAttr(a.getKey());
-            }
-        }
-    }
-
-    private static void removeEmptyTags(Element doc) {
-        for (Element element : doc.select("*")) {
-            if (!element.hasText() && element.isBlock()) {
-                element.remove();
-            }
-        }
+        return Util.getCleanedHtml(content, isTipsPage, false);
     }
 
     private static void initializeCardList(String offset, boolean isTcg) throws InterruptedException, ExecutionException, JSONException, IOException {
@@ -725,12 +456,6 @@ public class MainParallel {
         }
     }
 
-    private static void logLine(String txt) {
-        DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-        Date date = new Date();
-        System.out.println(dateFormat.format(date) + ": " + txt);
-    }
-
     //for possible future launch parameters
     private static void parseArgs(String[] args) {
         List<String> argsList = Arrays.asList(args);
@@ -747,13 +472,5 @@ public class MainParallel {
 
     interface Work {
         void processItem(String itemName, AtomicInteger doneCounter) throws IOException, SQLException;
-    }
-
-    private static String jsoupGet(String url) throws IOException {
-        String content = Jsoup.connect(url)
-                .userAgent("Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36")
-                .referrer("http://www.google.com")
-                .timeout(5 * 1000).ignoreContentType(true).execute().body();
-        return content;
     }
 }

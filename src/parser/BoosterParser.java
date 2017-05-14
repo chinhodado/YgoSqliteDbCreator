@@ -1,10 +1,12 @@
+package parser;
+
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 /**
  * Parsing booster dom
- *
+ * <p>
  * Created by Chin on 06-Feb-17.
  */
 public class BoosterParser {
@@ -14,7 +16,7 @@ public class BoosterParser {
     public BoosterParser(String boosterName, Document dom) {
         this.boosterName = boosterName;
         Element elem = dom.getElementById("mw-content-text");
-        removeSupTag(elem);
+        Util.removeSupTag(elem);
         this.dom = elem;
     }
 
@@ -91,13 +93,6 @@ public class BoosterParser {
         }
         catch (Exception e) {
             return null;
-        }
-    }
-
-    private static void removeSupTag(Element elem) {
-        Elements sups = elem.getElementsByTag("sup");
-        for (Element e : sups) {
-            e.remove();
         }
     }
 }
