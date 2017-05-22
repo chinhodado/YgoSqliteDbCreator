@@ -17,6 +17,7 @@ import org.json.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import parser.Booster;
 import parser.BoosterParser;
 import parser.Card;
 import parser.CardParser;
@@ -273,27 +274,20 @@ public class MainParallel {
     }
 
     private static void processBooster(String boosterName, AtomicInteger doneCounter) throws IOException, SQLException {
-        String enReleaseDate, jpReleaseDate, skReleaseDate, worldwideReleaseDate, imgSrc;
-
         String boosterLink = boosterLinkTable.get(boosterName)[0];
         String boosterUrl = "http://yugioh.wikia.com" + boosterLink;
 
         if (ENABLE_VERBOSE_LOG) System.out.println("Fetching " + boosterName + "'s general info");
         Document mainDom = Jsoup.parse(jsoupGet(boosterUrl));
         BoosterParser parser = new BoosterParser(boosterName, mainDom);
-
-        enReleaseDate = parser.getEnglishReleaseDate();
-        jpReleaseDate = parser.getJapaneseReleaseDate();
-        skReleaseDate = parser.getSouthKoreaReleaseDate();
-        worldwideReleaseDate = parser.getWorldwideReleaseDate();
-        imgSrc = Util.getShortenedImageLink(parser.getImageLink());
+        Booster booster = parser.parse();
 
         psBoosterInsert.setString(1, boosterName);
-        psBoosterInsert.setString(2, enReleaseDate);
-        psBoosterInsert.setString(3, jpReleaseDate);
-        psBoosterInsert.setString(4, skReleaseDate);
-        psBoosterInsert.setString(5, worldwideReleaseDate);
-        psBoosterInsert.setString(6, imgSrc);
+        psBoosterInsert.setString(2, booster.getEnReleaseDate());
+        psBoosterInsert.setString(3, booster.getJpReleaseDate());
+        psBoosterInsert.setString(4, booster.getSkReleaseDate());
+        psBoosterInsert.setString(5, booster.getWorldwideReleaseDate());
+        psBoosterInsert.setString(6, booster.getImgSrc());
 
         psBoosterInsert.executeUpdate();
         doneCounter.incrementAndGet();

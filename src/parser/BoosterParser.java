@@ -20,23 +20,34 @@ public class BoosterParser {
         this.dom = elem;
     }
 
-    public String getJapaneseReleaseDate() {
+    public Booster parse() {
+        Booster booster = new Booster();
+        booster.setBoosterName(boosterName);
+        booster.setJpReleaseDate(getJapaneseReleaseDate());
+        booster.setEnReleaseDate(getEnglishReleaseDate());
+        booster.setSkReleaseDate(getSouthKoreaReleaseDate());
+        booster.setWorldwideReleaseDate(getWorldwideReleaseDate());
+        booster.setImgSrc(Util.getShortenedImageLink(getImageLink()));
+        return booster;
+    }
+
+    private String getJapaneseReleaseDate() {
         return getReleaseDate("Japan");
     }
 
-    public String getEnglishReleaseDate() {
+    private String getEnglishReleaseDate() {
         return getReleaseDate("North America");
     }
 
-    public String getSouthKoreaReleaseDate() {
+    private String getSouthKoreaReleaseDate() {
         return getReleaseDate("South Korea");
     }
 
-    public String getWorldwideReleaseDate() {
+    private String getWorldwideReleaseDate() {
         return getReleaseDate("Worldwide");
     }
 
-    public String getReleaseDate(String type) {
+    private String getReleaseDate(String type) {
         try {
             Elements sections = dom.getElementsByClass("portable-infobox").first().select("section.pi-item");
             for (Element section : sections) {
@@ -69,7 +80,7 @@ public class BoosterParser {
         return null;
     }
 
-    public String getImageLink() {
+    private String getImageLink() {
         try {
             return dom.getElementsByClass("image-thumbnail").first().attr("href");
         }
