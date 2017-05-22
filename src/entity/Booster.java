@@ -1,4 +1,4 @@
-package parser;
+package entity;
 
 /**
  * Created by Chin on 22-May-17.

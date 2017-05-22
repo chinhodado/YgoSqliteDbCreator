@@ -1,5 +1,6 @@
 package parser;
 
+import entity.Booster;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;

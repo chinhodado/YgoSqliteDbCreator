@@ -1,5 +1,6 @@
 package parser;
 
+import entity.Card;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.junit.Test;

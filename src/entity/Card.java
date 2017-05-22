@@ -1,4 +1,4 @@
-package parser;
+package entity;
 
 /**
  * Created by Chin on 13-May-17.
@@ -14,7 +14,7 @@ public class Card {
         return realName;
     }
 
-    void setRealName(String realName) {
+    public void setRealName(String realName) {
         this.realName = realName;
     }
 
@@ -22,7 +22,7 @@ public class Card {
         return attribute;
     }
 
-    void setAttribute(String attribute) {
+    public void setAttribute(String attribute) {
         this.attribute = attribute;
     }
 
@@ -30,7 +30,7 @@ public class Card {
         return cardType;
     }
 
-    void setCardType(String cardType) {
+    public void setCardType(String cardType) {
         this.cardType = cardType;
     }
 
@@ -38,7 +38,7 @@ public class Card {
         return types;
     }
 
-    void setTypes(String types) {
+    public void setTypes(String types) {
         this.types = types;
     }
 
@@ -46,7 +46,7 @@ public class Card {
         return level;
     }
 
-    void setLevel(String level) {
+    public void setLevel(String level) {
         this.level = level;
     }
 
@@ -54,7 +54,7 @@ public class Card {
         return atk;
     }
 
-    void setAtk(String atk) {
+    public void setAtk(String atk) {
         this.atk = atk;
     }
 
@@ -62,7 +62,7 @@ public class Card {
         return def;
     }
 
-    void setDef(String def) {
+    public void setDef(String def) {
         this.def = def;
     }
 
@@ -70,7 +70,7 @@ public class Card {
         return passcode;
     }
 
-    void setPasscode(String passcode) {
+    public void setPasscode(String passcode) {
         this.passcode = passcode;
     }
 
@@ -78,7 +78,7 @@ public class Card {
         return effectTypes;
     }
 
-    void setEffectTypes(String effectTypes) {
+    public void setEffectTypes(String effectTypes) {
         this.effectTypes = effectTypes;
     }
 
@@ -86,7 +86,7 @@ public class Card {
         return materials;
     }
 
-    void setMaterials(String materials) {
+    public void setMaterials(String materials) {
         this.materials = materials;
     }
 
@@ -94,7 +94,7 @@ public class Card {
         return fusionMaterials;
     }
 
-    void setFusionMaterials(String fusionMaterials) {
+    public void setFusionMaterials(String fusionMaterials) {
         this.fusionMaterials = fusionMaterials;
     }
 
@@ -102,7 +102,7 @@ public class Card {
         return rank;
     }
 
-    void setRank(String rank) {
+    public void setRank(String rank) {
         this.rank = rank;
     }
 
@@ -110,7 +110,7 @@ public class Card {
         return ritualSpell;
     }
 
-    void setRitualSpell(String ritualSpell) {
+    public void setRitualSpell(String ritualSpell) {
         this.ritualSpell = ritualSpell;
     }
 
@@ -118,7 +118,7 @@ public class Card {
         return pendulumScale;
     }
 
-    void setPendulumScale(String pendulumScale) {
+    public void setPendulumScale(String pendulumScale) {
         this.pendulumScale = pendulumScale;
     }
 
@@ -126,7 +126,7 @@ public class Card {
         return linkMarkers;
     }
 
-    void setLinkMarkers(String linkMarkers) {
+    public void setLinkMarkers(String linkMarkers) {
         this.linkMarkers = linkMarkers;
     }
 
@@ -134,7 +134,7 @@ public class Card {
         return link;
     }
 
-    void setLink(String link) {
+    public void setLink(String link) {
         this.link = link;
     }
 
@@ -142,7 +142,7 @@ public class Card {
         return property;
     }
 
-    void setProperty(String property) {
+    public void setProperty(String property) {
         this.property = property;
     }
 
@@ -150,7 +150,7 @@ public class Card {
         return summonedBy;
     }
 
-    void setSummonedBy(String summonedBy) {
+    public void setSummonedBy(String summonedBy) {
         this.summonedBy = summonedBy;
     }
 
@@ -158,7 +158,7 @@ public class Card {
         return limitText;
     }
 
-    void setLimitText(String limitText) {
+    public void setLimitText(String limitText) {
         this.limitText = limitText;
     }
 
@@ -166,7 +166,7 @@ public class Card {
         return synchroMaterial;
     }
 
-    void setSynchroMaterial(String synchroMaterial) {
+    public void setSynchroMaterial(String synchroMaterial) {
         this.synchroMaterial = synchroMaterial;
     }
 
@@ -174,7 +174,7 @@ public class Card {
         return ritualMonster;
     }
 
-    void setRitualMonster(String ritualMonster) {
+    public void setRitualMonster(String ritualMonster) {
         this.ritualMonster = ritualMonster;
     }
 
@@ -182,7 +182,7 @@ public class Card {
         return lore;
     }
 
-    void setLore(String lore) {
+    public void setLore(String lore) {
         this.lore = lore;
     }
 
@@ -190,7 +190,7 @@ public class Card {
         return archetype;
     }
 
-    void setArchetype(String archetype) {
+    public void setArchetype(String archetype) {
         this.archetype = archetype;
     }
 
@@ -198,7 +198,7 @@ public class Card {
         return ocgStatus;
     }
 
-    void setOcgStatus(String ocgStatus) {
+    public void setOcgStatus(String ocgStatus) {
         this.ocgStatus = ocgStatus;
     }
 
@@ -206,7 +206,7 @@ public class Card {
         return tcgAdvStatus;
     }
 
-    void setTcgAdvStatus(String tcgAdvStatus) {
+    public void setTcgAdvStatus(String tcgAdvStatus) {
         this.tcgAdvStatus = tcgAdvStatus;
     }
 
@@ -214,7 +214,7 @@ public class Card {
         return tcgTrnStatus;
     }
 
-    void setTcgTrnStatus(String tcgTrnStatus) {
+    public void setTcgTrnStatus(String tcgTrnStatus) {
         this.tcgTrnStatus = tcgTrnStatus;
     }
 
@@ -222,7 +222,7 @@ public class Card {
         return img;
     }
 
-    void setImg(String img) {
+    public void setImg(String img) {
         this.img = img;
     }
 }

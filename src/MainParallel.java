@@ -17,9 +17,9 @@ import org.json.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-import parser.Booster;
+import entity.Booster;
 import parser.BoosterParser;
-import parser.Card;
+import entity.Card;
 import parser.CardParser;
 import parser.Util;
 
