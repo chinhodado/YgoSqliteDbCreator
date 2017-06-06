@@ -18,7 +18,9 @@ import java.util.regex.Pattern;
  * Created by Chin on 13-May-17.
  */
 public class Util {
-    public static String getCleanedHtml(Element content, boolean isTipPage, boolean rawText) {
+    private static boolean rawText;
+
+    public static String getCleanedHtml(Element content, boolean isTipPage) {
         Elements navboxes = content.select("table.navbox");
         if (!navboxes.isEmpty()) {navboxes.first().remove();} // remove the navigation box
 
@@ -135,5 +137,13 @@ public class Util {
                 .referrer("http://www.google.com")
                 .timeout(5 * 1000).ignoreContentType(true).execute().body();
         return content;
+    }
+
+    public static void setRawText(boolean isRawText){
+        rawText = isRawText;
+    }
+
+    public static boolean getRawTextSetting(){
+        return rawText;
     }
 }
