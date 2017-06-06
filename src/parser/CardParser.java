@@ -199,7 +199,7 @@ public class CardParser {
 
     private String getCardLore(Element dom) {
         Element effectBox = dom.getElementsByClass("cardtablespanrow").first().getElementsByClass("navbox-list").first();
-        String effect = Util.getCleanedHtml(effectBox, false, false);
+        String effect = Util.getCleanedHtml(effectBox, false);
 
         // turn <dl> into <p> and <dt> into <b>
         effect = effect.replace("<dl", "<p").replace("dl>", "p>").replace("<dt", "<b").replace("dt>", "b>");

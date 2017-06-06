@@ -42,7 +42,6 @@ public class MainParallel {
     private static final AtomicInteger cardDoneCounter = new AtomicInteger();
     private static final AtomicInteger boosterDoneCounter = new AtomicInteger();
     private static int iteration = 0;
-    private static boolean rawText = false;
 
     // settings
     private static final boolean ENABLE_VERBOSE_LOG = false;
@@ -362,7 +361,7 @@ public class MainParallel {
 
     private static String getCardInfoGeneric(Document dom, boolean isTipsPage) {
         Element content = dom.getElementById("mw-content-text");
-        return Util.getCleanedHtml(content, isTipsPage, false);
+        return Util.getCleanedHtml(content, isTipsPage);
     }
 
     private static void initializeCardList(String offset, boolean isTcg) throws InterruptedException, ExecutionException, JSONException, IOException {
@@ -454,13 +453,14 @@ public class MainParallel {
     private static void parseArgs(String[] args) {
         List<String> argsList = Arrays.asList(args);
         if (argsList.contains("--raw")) {
-            rawText = Boolean.parseBoolean(argsList.get(argsList.indexOf("--raw") + 1));
+            boolean rawText = Boolean.parseBoolean(argsList.get(argsList.indexOf("--raw") + 1));
+            Util.setRawText(rawText);
         }
     }
 
     private static void outputArgs(){
         logLine("Launched with settings:");
-        String confirmRaw = "Raw Text: " + Boolean.toString(rawText);
+        String confirmRaw = "Raw Text: " + Boolean.toString(Util.getRawTextSetting());
         logLine(confirmRaw);
     }
 
