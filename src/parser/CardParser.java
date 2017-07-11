@@ -90,7 +90,7 @@ public class CardParser {
                     case "Rank"                         : rank            = data; break; // 4
                     case "Ritual Spell Card required"   : ritualSpell     = data; break; // "Zera Ritual"
                     case "Pendulum Scale"               : pendulumScale   = data; break; // 1
-                    case "Link Markers"                 : linkMarkers     = data; break; // Bottom-Left, Bottom-Right
+                    case "Link Markers"                 : linkMarkers     = data.replaceAll(" , ", ", "); break; // Top, Bottom-Left, Bottom-Right
                     case "Property"                     : property        = data; break; // Continuous
                     case "Summoned by the effect of"    : summonedBy      = data; break; // "Gorz the Emissary of Darkness"
                     case "Limitation text"              : limitText       = data; break; // This card cannot be in a Deck.

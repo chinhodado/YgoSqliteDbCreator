@@ -97,8 +97,8 @@ public class MainParallel {
                    "  ocgStatus   TEXT, "  +
                    "  tcgAdvStatus TEXT, " +
                    "  tcgTrnStatus TEXT, " +
-                   "  ocgOnly   INTEGER, " +
-                   "  tcgOnly   INTEGER, " +
+                   "  ocgOnly   TEXT, " +
+                   "  tcgOnly   TEXT, " +
                    "  img TEXT) ";
         stmt.executeUpdate(sql);
 
@@ -334,7 +334,7 @@ public class MainParallel {
         CardParser parser = new CardParser(cardName, mainDom);
         Card card = parser.parse();
 
-        String ocgOnly = "", tcgOnly = "";
+        String ocgOnly = "0", tcgOnly = "0";
         if (tcgCards.contains(cardName) && !ocgCards.contains(cardName)) {
             tcgOnly = "1";
         }

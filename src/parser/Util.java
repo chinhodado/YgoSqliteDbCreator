@@ -66,10 +66,13 @@ public class Util {
         // convert to text
         String text = content.html();
 
-        // remove useless tags
-        text = text.replace("<span>", "").replace("</span>", "").replace("<a>", "").replace("</a>", "");
         if (rawText) {
+            text.replace("<br>", "\\n");
             text = Jsoup.parse(text).text();
+        }
+        else{
+            // remove useless tags
+            text = text.replace("<span>", "").replace("</span>", "").replace("<a>", "").replace("</a>", "");
         }
         return text;
     }
