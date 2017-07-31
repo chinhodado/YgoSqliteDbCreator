@@ -58,7 +58,7 @@ public class CardParserTest {
         return Arrays.asList(new Object[][] {
             // normal
             { "Dark Magician", "http://yugioh.wikia.com/wiki/Dark_Magician",
-                "", "DARK", "Monster", "Spellcaster", "7", "2500", "2100", "46986414", "", "", "", "", "", "", "", "", "", "", "", "", "", "<i>The ultimate wizard in terms of attack and defense.</i>", "U", "U", "U"},
+                "", "DARK", "Monster", "Spellcaster / Normal", "7", "2500", "2100", "46986414", "", "", "", "", "", "", "", "", "", "", "", "", "", "<i>The ultimate wizard in terms of attack and defense.</i>", "U", "U", "U"},
 
             // effect
             { "Black Luster Soldier - Envoy of the Beginning", "http://yugioh.wikia.com/wiki/Black_Luster_Soldier_-_Envoy_of_the_Beginning",
@@ -86,7 +86,7 @@ public class CardParserTest {
 
             // link
             { "Decode Talker", "http://yugioh.wikia.com/wiki/Decode_Talker",
-                "", "DARK", "Monster", "Cyberse / Link / Effect", "", "2300", "", "01861629", X, "2+ Effect Monsters", "", "", "", "", "Top, Bottom-Left, Bottom-Right", "3", "", "", "", "", "", X, X, X, X},
+                "", "DARK", "Monster", "Cyberse / Link / Effect", "", "2300", "", "01861629", X, "2+ Effect Monsters", "", "", "", "", "Bottom-Left, Top, Bottom-Right", "3", "", "", "", "", "", X, X, X, X},
 
             // token
             { "Emissary of Darkness Token", "http://yugioh.wikia.com/wiki/Emissary_of_Darkness_Token",
