@@ -164,6 +164,7 @@ public class CardParser {
 
         lore = getCardLore(dom);
         archetype = getArchetype(dom);
+        img = getImage(dom);
 
         Card card = new Card();
         card.setRealName(realName);
@@ -233,4 +234,18 @@ public class CardParser {
 
         return archetype;
     }
+
+    private String getImage(Element dom){
+        Element imageElement;
+
+        try{
+            imageElement = dom.getElementsByClass("cardtable-cardimage").first()
+                    .firstElementSibling();
+        }catch (Exception e) {
+            return "";
+        }
+
+        return imageElement.attr("href");
+    }
+
 }
