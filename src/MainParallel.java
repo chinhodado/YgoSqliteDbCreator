@@ -99,7 +99,8 @@ public class MainParallel {
                    "  tcgTrnStatus TEXT, " +
                    "  ocgOnly   TEXT, " +
                    "  tcgOnly   TEXT, " +
-                   "  img TEXT) ";
+                   "  img TEXT, " +
+                   "  url TEXT) ";
         stmt.executeUpdate(sql);
 
         sql = "CREATE TABLE metadata (dataCreated TEXT NOT NULL)";
@@ -349,7 +350,7 @@ public class MainParallel {
                 card.getPendulumScale(), card.getLinkMarkers(), card.getLink(), card.getProperty(), card.getSummonedBy(),
                 card.getLimitText(), card.getSynchroMaterial(), card.getRitualMonster(), ruling, tips, trivia,
                 card.getLore(), card.getArchetype(), card.getOcgStatus(), card.getTcgAdvStatus(), card.getTcgTrnStatus(),
-                ocgOnly, tcgOnly, card.getImg() };
+                ocgOnly, tcgOnly, card.getImg(), cardUrl };
 
         for (int i = 0; i < params.length; i++) {
             psParms.setString(i+1, params[i]);
