@@ -137,8 +137,8 @@ public class MainParallel {
                 "INSERT INTO Card (name, realName, attribute, cardType, types, level, atk, def, passcode, " +
                 "effectTypes, materials, fusionMaterials, rank, ritualSpell, " +
                 "pendulumScale, linkMarkers, link, property, summonedBy, limitText, synchroMaterial, ritualMonster, " +
-                "ruling, tips, trivia, lore, archetype, ocgStatus, tcgAdvStatus, tcgTrnStatus, ocgOnly, tcgOnly, img) " +
-                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+                "ruling, tips, trivia, lore, archetype, ocgStatus, tcgAdvStatus, tcgTrnStatus, ocgOnly, tcgOnly, img, url) " +
+                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
 
         psBoosterInsert = connection.prepareStatement(
                 "INSERT INTO Booster (name, enReleaseDate, jpReleaseDate, skReleaseDate, worldwideReleaseDate, imgSrc) " +
@@ -148,7 +148,7 @@ public class MainParallel {
         Scanner in = new Scanner(System.in);
 
         logLine("Processing card list");
-        List<String> workList = cardList;
+        List<String> workList = cardList.subList(0, 30);
         int totalCards = cardList.size();
         while (!workList.isEmpty()) {
             iteration++;
@@ -164,7 +164,7 @@ public class MainParallel {
         }
 
         logLine("Processing booster list");
-        workList = boosterList;
+        workList = boosterList.subList(0, 1);
         int totalBoosters = boosterList.size();
         while (!workList.isEmpty()) {
             iteration++;

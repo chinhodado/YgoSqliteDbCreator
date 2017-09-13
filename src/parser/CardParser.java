@@ -240,7 +240,7 @@ public class CardParser {
 
         try{
             imageElement = dom.getElementsByClass("cardtable-cardimage").first()
-                    .firstElementSibling();
+            .getElementsByTag("a").first();
         }catch (Exception e) {
             return "";
         }
