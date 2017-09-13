@@ -148,7 +148,7 @@ public class MainParallel {
         Scanner in = new Scanner(System.in);
 
         logLine("Processing card list");
-        List<String> workList = cardList.subList(0, 30);
+        List<String> workList = cardList;
         int totalCards = cardList.size();
         while (!workList.isEmpty()) {
             iteration++;
@@ -164,7 +164,7 @@ public class MainParallel {
         }
 
         logLine("Processing booster list");
-        workList = boosterList.subList(0, 1);
+        workList = boosterList;
         int totalBoosters = boosterList.size();
         while (!workList.isEmpty()) {
             iteration++;
