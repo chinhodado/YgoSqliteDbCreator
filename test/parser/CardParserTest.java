@@ -86,7 +86,7 @@ public class CardParserTest {
 
             // link
             { "Decode Talker", "http://yugioh.wikia.com/wiki/Decode_Talker",
-                "", "DARK", "Monster", "Cyberse / Link / Effect", "", "2300", "", "01861629", X, "2+ Effect Monsters", "", "", "", "", "Bottom-Left, Top, Bottom-Right", "3", "", "", "", "", "", X, X, X, X, X},
+                "", "DARK", "Monster", "Cyberse / Link / Effect", "", "2300", "", "01861629", X, "2+ Effect Monsters", "", "", "", "", "|Bottom-Left|, |Top|, |Bottom-Right|", "3", "", "", "", "", "", X, X, X, X, X},
 
             // token
             { "Emissary of Darkness Token", "http://yugioh.wikia.com/wiki/Emissary_of_Darkness_Token",

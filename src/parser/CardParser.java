@@ -5,8 +5,10 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Created by Chin on 13-May-17.
@@ -90,7 +92,13 @@ public class CardParser {
                     case "Rank"                         : rank            = data; break; // 4
                     case "Ritual Spell Card required"   : ritualSpell     = data; break; // "Zera Ritual"
                     case "Pendulum Scale"               : pendulumScale   = data; break; // 1
-                    case "Link Arrows"                  : linkMarkers     = data.replaceAll(" , ", ", "); break; // Top , Bottom-Left , Bottom-Right
+                    case "Link Arrows"                  : {                              // Top , Bottom-Left , Bottom-Right
+                        linkMarkers = data.replaceAll(" , ", ", ");
+                        linkMarkers = Arrays.stream(linkMarkers.split(", "))
+                                .map(token -> '|' + token + '|')
+                                .collect(Collectors.joining(", "));
+                        break;
+                    }
                     case "Property"                     : property        = data; break; // Continuous
                     case "Summoned by the effect of"    : summonedBy      = data; break; // "Gorz the Emissary of Darkness"
                     case "Limitation text"              : limitText       = data; break; // This card cannot be in a Deck.

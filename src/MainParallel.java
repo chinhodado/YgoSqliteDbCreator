@@ -8,7 +8,6 @@ import java.text.SimpleDateFormat;
 
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.json.JSONArray;
@@ -50,7 +49,7 @@ public class MainParallel {
     private static final boolean ENABLE_TIPS = true;
     private static final int NUM_THREAD = 8;
 
-    public static void main (String args[]) throws InterruptedException, ExecutionException, JSONException, IOException, ClassNotFoundException, SQLException {
+    public static void main (String[] args) throws InterruptedException, JSONException, IOException, ClassNotFoundException, SQLException {
         parseArgs(args);
         outputArgs();
         logLine("Initializing TCG card list");
@@ -365,7 +364,7 @@ public class MainParallel {
         return Util.getCleanedHtml(content, isTipsPage, false);
     }
 
-    private static void initializeCardList(String offset, boolean isTcg) throws InterruptedException, ExecutionException, JSONException, IOException {
+    private static void initializeCardList(String offset, boolean isTcg) throws JSONException, IOException {
         // this will return up to 5000 articles in the TCG_cards/OCG_cards category. Note that this is not always up-to-date,
         // as newly added articles may take a day or two before showing up in here
         String url;
@@ -409,7 +408,7 @@ public class MainParallel {
         }
     }
 
-    private static void initializeBoosterList(String offset, boolean isTcg) throws InterruptedException, ExecutionException, JSONException, IOException {
+    private static void initializeBoosterList(String offset, boolean isTcg) throws JSONException, IOException {
         String url;
         if (isTcg) {
             url = "http://yugioh.wikia.com/api/v1/Articles/List?category=TCG_Booster_Packs&limit=5000&namespaces=0";
@@ -460,7 +459,7 @@ public class MainParallel {
 
     private static void outputArgs(){
         logLine("Launched with settings:");
-        String confirmRaw = "Raw Text: " + Boolean.toString(rawText);
+        String confirmRaw = "Raw Text: " + rawText;
         logLine(confirmRaw);
     }
 
