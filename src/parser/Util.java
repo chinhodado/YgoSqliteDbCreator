@@ -22,6 +22,7 @@ public class Util {
         Elements navboxes = content.select("table.navbox");
         if (!navboxes.isEmpty()) {navboxes.first().remove();} // remove the navigation box
 
+        content.select(".nomobile").remove();            // remove the navigation box in yugipedia
         content.select("script").remove();               // remove <script> tags
         content.select("noscript").remove();             // remove <noscript> tags
         content.select("#toc").remove();                 // remove the table of content
@@ -57,15 +58,18 @@ public class Util {
             }
         }
 
-        removeComments(content);                         // remove comments
-        removeAttributes(content);                       // remove all attributes. Has to be at the end, otherwise can't grab id, etc.
-        removeEmptyTags(content);                        // remove all empty tags
+        removeComments(content);     // remove comments
+        removeAttributes(content);   // remove all attributes. Has to be at the end, otherwise can't grab id, etc.
+        removeEmptyTags(content);    // remove all empty tags
 
         // convert to text
         String text = content.html();
 
         // remove useless tags
-        text = text.replace("<span>", "").replace("</span>", "").replace("<a>", "").replace("</a>", "");
+        text = text.replace("<span>", "")
+                   .replace("</span>", "")
+                   .replace("<a>", "")
+                   .replace("</a>", "");
         if (rawText) {
             text = Jsoup.parse(text).text();
         }
