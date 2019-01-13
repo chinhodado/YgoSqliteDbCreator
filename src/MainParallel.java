@@ -11,6 +11,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import api.YugiohWikiaApi;
+import api.YugipediaApi;
 import org.json.JSONException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -42,6 +43,10 @@ public class MainParallel {
     private static int iteration = 0;
     private static boolean rawText = false;
 
+    private static final YugipediaApi yugipediaApi = new YugipediaApi();
+    private static Map<String, String> yugipediaRulingMap;
+    private static final AtomicInteger yugipediaRulingUsedCounter = new AtomicInteger();
+
     // settings
     private static final boolean ENABLE_VERBOSE_LOG = false;
     private static final boolean ENABLE_TRIVIA = true;
@@ -56,6 +61,9 @@ public class MainParallel {
 
         initializeCardList(wikiaApi);
         initializeBoosterList(wikiaApi);
+
+        logLine("Fetching ruling list from Yugipedia");
+        yugipediaRulingMap = yugipediaApi.getRulingMap();
 
         Class.forName("org.sqlite.JDBC");
         Connection connection = DriverManager.getConnection("jdbc:sqlite::memory:");
@@ -176,6 +184,7 @@ public class MainParallel {
 
         System.out.println();
         logLine("Completed all iterations.");
+        logLine("Yugipedia ruling used: " + yugipediaRulingUsedCounter);
 
         // Dump the database contents to a file
         stmt.executeUpdate("backup to ygo.db");
@@ -334,6 +343,14 @@ public class MainParallel {
             ruling = getCardInfoGeneric(dom, false);
         }
         catch (Exception e) { /* do nothing */ }
+
+        if ((ruling == null || "".equals(ruling)) && yugipediaRulingMap.containsKey(cardName)) {
+            try {
+                ruling = yugipediaApi.getCardRuling(yugipediaRulingMap.get(cardName));
+                yugipediaRulingUsedCounter.incrementAndGet();
+            }
+            catch (Exception e) { /* do nothing */ }
+        }
 
         if (ENABLE_TIPS) {
             try {

@@ -32,11 +32,11 @@ public class YugipediaApi {
         return Util.getCleanedHtml(content, isTipsPage, false);
     }
 
-    public Map<String, String> getRulingList() throws IOException, JSONException {
-        return getRulingList(null, new HashMap<>());
+    public Map<String, String> getRulingMap() throws IOException, JSONException {
+        return getRulingMap(null, new HashMap<>());
     }
 
-    private Map<String, String> getRulingList(String cmcontinue, Map<String, String> rulingMap) throws JSONException, IOException {
+    private Map<String, String> getRulingMap(String cmcontinue, Map<String, String> rulingMap) throws JSONException, IOException {
         String url = "http://yugipedia.com/api.php?action=query&format=json&list=categorymembers" +
                 "&cmtitle=Category:Card_Rulings&cmlimit=500";
 
@@ -66,7 +66,7 @@ public class YugipediaApi {
 
         if (myJSON.has("continue")) {
             String nextCmcontinue = myJSON.getJSONObject("continue").getString("cmcontinue");
-            return getRulingList(nextCmcontinue, rulingMap);
+            return getRulingMap(nextCmcontinue, rulingMap);
         }
         else {
             return rulingMap;

@@ -16,7 +16,7 @@ public class YugipediaApiTest {
     @BeforeClass
     public static void setupAll() throws IOException, JSONException {
         YugipediaApi api = new YugipediaApi();
-        rulings = api.getRulingList();
+        rulings = api.getRulingMap();
     }
 
     @Test
