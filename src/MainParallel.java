@@ -10,9 +10,8 @@ import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.json.JSONArray;
+import api.YugiohWikiaApi;
 import org.json.JSONException;
-import org.json.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -26,15 +25,15 @@ import static parser.Util.jsoupGet;
 import static parser.Util.logLine;
 
 public class MainParallel {
-    private static List<String> cardList = new ArrayList<>(8192);
-    private static Set<String> ocgCards = new HashSet<>(8192);
-    private static Set<String> tcgCards = new HashSet<>(8192);
-    private static Map<String, String[]> cardLinkTable = new HashMap<>(8192);
+    private static List<String> cardList;
+    private static Set<String> ocgCards;
+    private static Set<String> tcgCards;
+    private static Map<String, String> cardLinkTable;
 
-    private static List<String> boosterList = new ArrayList<>();
-    private static Set<String> ocgBoosters = new HashSet<>();
-    private static Set<String> tcgBoosters = new HashSet<>();
-    private static Map<String, String[]> boosterLinkTable = new HashMap<>();
+    private static List<String> boosterList;
+    private static Set<String> ocgBoosters;
+    private static Set<String> tcgBoosters;
+    private static Map<String, String> boosterLinkTable;
 
     private static PreparedStatement psParms;
     private static PreparedStatement psBoosterInsert;
@@ -52,14 +51,11 @@ public class MainParallel {
     public static void main (String[] args) throws InterruptedException, JSONException, IOException, ClassNotFoundException, SQLException {
         parseArgs(args);
         outputArgs();
-        logLine("Initializing TCG card list");
-        initializeCardList(null, true);
-        logLine("Initializing OCG card list");
-        initializeCardList(null, false);
-        logLine("Initializing TCG booster list");
-        initializeBoosterList(null, true);
-        logLine("Initializing OCG booster list");
-        initializeBoosterList(null, false);
+
+        YugiohWikiaApi wikiaApi = new YugiohWikiaApi();
+
+        initializeCardList(wikiaApi);
+        initializeBoosterList(wikiaApi);
 
         Class.forName("org.sqlite.JDBC");
         Connection connection = DriverManager.getConnection("jdbc:sqlite::memory:");
@@ -189,6 +185,34 @@ public class MainParallel {
         logLine("Saved to ygo.db successfully. Everything done.");
     }
 
+    private static void initializeCardList(YugiohWikiaApi wikiaApi) throws IOException, JSONException {
+        logLine("Fetching TCG card list");
+        Map<String, String> tcgCardMap = wikiaApi.getCardMap(true);
+        tcgCards = new HashSet<>(tcgCardMap.keySet());
+
+        logLine("Fetching OCG card list");
+        Map<String, String> ocgCardMap = wikiaApi.getCardMap(false);
+        ocgCards = new HashSet<>(ocgCardMap.keySet());
+
+        cardLinkTable = new HashMap<>(tcgCardMap);
+        ocgCardMap.forEach(cardLinkTable::putIfAbsent);
+        cardList = new ArrayList<>(cardLinkTable.keySet());
+    }
+
+    private static void initializeBoosterList(YugiohWikiaApi wikiaApi) throws IOException, JSONException {
+        logLine("Fetching TCG booster list");
+        Map<String, String> tcgBoosterMap = wikiaApi.getBoosterMap(true);
+        tcgBoosters = new HashSet<>(tcgBoosterMap.keySet());
+
+        logLine("Fetching OCG booster list");
+        Map<String, String> ocgBoosterMap = wikiaApi.getBoosterMap(false);
+        ocgBoosters = new HashSet<>(ocgBoosterMap.keySet());
+
+        boosterLinkTable = new HashMap<>(tcgBoosterMap);
+        ocgBoosterMap.forEach(boosterLinkTable::putIfAbsent);
+        boosterList = new ArrayList<>(boosterLinkTable.keySet());
+    }
+
     private static List<String> doWork(List<String> workList, Work workFunction, int totalWorkSize, AtomicInteger doneCounter) throws InterruptedException {
         System.out.println();
         int size = workList.size();
@@ -273,7 +297,7 @@ public class MainParallel {
     }
 
     private static void processBooster(String boosterName, AtomicInteger doneCounter) throws IOException, SQLException {
-        String boosterLink = boosterLinkTable.get(boosterName)[0];
+        String boosterLink = boosterLinkTable.get(boosterName);
         String boosterUrl = "http://yugioh.wikia.com" + boosterLink;
 
         if (ENABLE_VERBOSE_LOG) System.out.println("Fetching " + boosterName + "'s general info");
@@ -301,7 +325,7 @@ public class MainParallel {
     private static void processCard(String cardName, AtomicInteger doneCounter) throws IOException, SQLException {
         String ruling = "", tips = "", trivia = "";
 
-        String cardLink = cardLinkTable.get(cardName)[0];
+        String cardLink = cardLinkTable.get(cardName);
         String cardUrl = "http://yugioh.wikia.com" + cardLink;
 
         try {
@@ -364,90 +388,7 @@ public class MainParallel {
         return Util.getCleanedHtml(content, isTipsPage, false);
     }
 
-    private static void initializeCardList(String offset, boolean isTcg) throws JSONException, IOException {
-        // this will return up to 5000 articles in the TCG_cards/OCG_cards category. Note that this is not always up-to-date,
-        // as newly added articles may take a day or two before showing up in here
-        String url;
-        if (isTcg) {
-            url = "http://yugioh.wikia.com/api/v1/Articles/List?category=TCG_cards&limit=5000&namespaces=0";
-        }
-        else {
-            url = "http://yugioh.wikia.com/api/v1/Articles/List?category=OCG_cards&limit=5000&namespaces=0";
-        }
 
-        if (offset != null) {
-            url = url + "&offset=" + offset;
-        }
-        String jsonString = jsoupGet(url);
-
-        JSONObject myJSON = new JSONObject(jsonString);
-        JSONArray myArray = myJSON.getJSONArray("items");
-        for (int i = 0; i < myArray.length(); i++) {
-            String cardName = myArray.getJSONObject(i).getString("title");
-            if (cardName.trim().endsWith("(temp)")) {
-                continue;
-            }
-
-            if (!cardLinkTable.containsKey(cardName)) {
-                cardList.add(cardName);
-                String[] tmp = {myArray.getJSONObject(i).getString("url")}; // TODO: no need for array
-                       // myArray.getJSONObject(i).getString("id")};
-                cardLinkTable.put(cardName, tmp);
-            }
-
-            if (isTcg) {
-                tcgCards.add(cardName);
-            }
-            else {
-                ocgCards.add(cardName);
-            }
-        }
-
-        if (myJSON.has("offset")) {
-            initializeCardList((String) myJSON.get("offset"), isTcg);
-        }
-    }
-
-    private static void initializeBoosterList(String offset, boolean isTcg) throws JSONException, IOException {
-        String url;
-        if (isTcg) {
-            url = "http://yugioh.wikia.com/api/v1/Articles/List?category=TCG_Booster_Packs&limit=5000&namespaces=0";
-        }
-        else {
-            url = "http://yugioh.wikia.com/api/v1/Articles/List?category=OCG_Booster_Packs&limit=5000&namespaces=0";
-        }
-
-        if (offset != null) {
-            url = url + "&offset=" + offset;
-        }
-        String jsonString = jsoupGet(url);
-
-        JSONObject myJSON = new JSONObject(jsonString);
-        JSONArray myArray = myJSON.getJSONArray("items");
-        for (int i = 0; i < myArray.length(); i++) {
-            String boosterName = myArray.getJSONObject(i).getString("title");
-            if (boosterName.trim().endsWith("(temp)")) {
-                continue;
-            }
-            if (!boosterLinkTable.containsKey(boosterName)) {
-                boosterList.add(boosterName);
-                String[] tmp = {myArray.getJSONObject(i).getString("url")}; // TODO: no need for array
-                // myArray.getJSONObject(i).getString("id")};
-                boosterLinkTable.put(boosterName, tmp);
-            }
-
-            if (isTcg) {
-                tcgBoosters.add(boosterName);
-            }
-            else {
-                ocgBoosters.add(boosterName);
-            }
-        }
-
-        if (myJSON.has("offset")) {
-            initializeBoosterList((String) myJSON.get("offset"), isTcg);
-        }
-    }
 
     //for possible future launch parameters
     private static void parseArgs(String[] args) {
