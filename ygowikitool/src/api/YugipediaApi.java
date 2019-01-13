@@ -16,7 +16,7 @@ import static parser.Util.jsoupGet;
 
 public class YugipediaApi {
 
-    public String getCardRuling(String pageid) {
+    public String getCardRulingByPageId(String pageid) {
         try {
             Document dom = Jsoup.parse(jsoupGet("https://yugipedia.com/?curid=" + pageid));
             return getCardInfoGeneric(dom, false);

@@ -46,6 +46,6 @@ public class YugipediaApiTest {
                 "</div>";
 
         YugipediaApi api = new YugipediaApi();
-        assertEquals(expected, api.getCardRuling(rulings.get("Thunder Dragon Titan")));
+        assertEquals(expected, api.getCardRulingByPageId(rulings.get("Thunder Dragon Titan")));
     }
 }

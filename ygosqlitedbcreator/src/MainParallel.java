@@ -1,28 +1,17 @@
-import java.io.IOException;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.text.SimpleDateFormat;
+import api.YugiohWikiaApi;
+import api.YugipediaApi;
+import entity.Booster;
+import entity.Card;
+import org.json.JSONException;
 
+import java.io.IOException;
+import java.sql.*;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import api.YugiohWikiaApi;
-import api.YugipediaApi;
-import org.json.JSONException;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import entity.Booster;
-import parser.BoosterParser;
-import entity.Card;
-import parser.CardParser;
-import parser.Util;
-
-import static parser.Util.jsoupGet;
 import static parser.Util.logLine;
 
 public class MainParallel {
@@ -47,6 +36,8 @@ public class MainParallel {
     private static Map<String, String> yugipediaRulingMap;
     private static final AtomicInteger yugipediaRulingUsedCounter = new AtomicInteger();
 
+    private static final YugiohWikiaApi wikiaApi = new YugiohWikiaApi();
+
     // settings
     private static final boolean ENABLE_VERBOSE_LOG = false;
     private static final boolean ENABLE_TRIVIA = true;
@@ -57,10 +48,8 @@ public class MainParallel {
         parseArgs(args);
         outputArgs();
 
-        YugiohWikiaApi wikiaApi = new YugiohWikiaApi();
-
-        initializeCardList(wikiaApi);
-        initializeBoosterList(wikiaApi);
+        initializeCardList();
+        initializeBoosterList();
 
         logLine("Fetching ruling list from Yugipedia");
         yugipediaRulingMap = yugipediaApi.getRulingMap();
@@ -194,7 +183,7 @@ public class MainParallel {
         logLine("Saved to ygo.db successfully. Everything done.");
     }
 
-    private static void initializeCardList(YugiohWikiaApi wikiaApi) throws IOException, JSONException {
+    private static void initializeCardList() throws IOException, JSONException {
         logLine("Fetching TCG card list");
         Map<String, String> tcgCardMap = wikiaApi.getCardMap(true);
         tcgCards = new HashSet<>(tcgCardMap.keySet());
@@ -208,7 +197,7 @@ public class MainParallel {
         cardList = new ArrayList<>(cardLinkTable.keySet());
     }
 
-    private static void initializeBoosterList(YugiohWikiaApi wikiaApi) throws IOException, JSONException {
+    private static void initializeBoosterList() throws IOException, JSONException {
         logLine("Fetching TCG booster list");
         Map<String, String> tcgBoosterMap = wikiaApi.getBoosterMap(true);
         tcgBoosters = new HashSet<>(tcgBoosterMap.keySet());
@@ -243,14 +232,10 @@ public class MainParallel {
 
         List<List<String>> parts = new ArrayList<>();
         for (int i = 0; i < size - LAST_CHUNK; i += CHUNK_SIZE) {
-            parts.add(new ArrayList<>(
-                    workList.subList(i, i + CHUNK_SIZE))
-            );
+            parts.add(new ArrayList<>(workList.subList(i, i + CHUNK_SIZE)));
         }
 
-        parts.add(new ArrayList<>(
-                workList.subList(size - LAST_CHUNK, size))
-        );
+        parts.add(new ArrayList<>(workList.subList(size - LAST_CHUNK, size)));
 
         List<Thread> threadList = new ArrayList<>();
         for (int i = 0; i < numThread; i++) {
@@ -307,12 +292,8 @@ public class MainParallel {
 
     private static void processBooster(String boosterName, AtomicInteger doneCounter) throws IOException, SQLException {
         String boosterLink = boosterLinkTable.get(boosterName);
-        String boosterUrl = "http://yugioh.wikia.com" + boosterLink;
-
         if (ENABLE_VERBOSE_LOG) System.out.println("Fetching " + boosterName + "'s general info");
-        Document mainDom = Jsoup.parse(jsoupGet(boosterUrl));
-        BoosterParser parser = new BoosterParser(boosterName, mainDom);
-        Booster booster = parser.parse();
+        Booster booster = wikiaApi.getBooster(boosterName, boosterLink);
 
         psBoosterInsert.setString(1, boosterName);
         psBoosterInsert.setString(2, booster.getEnReleaseDate());
@@ -335,45 +316,30 @@ public class MainParallel {
         String ruling = "", tips = "", trivia = "";
 
         String cardLink = cardLinkTable.get(cardName);
-        String cardUrl = "http://yugioh.wikia.com" + cardLink;
 
-        try {
-            if (ENABLE_VERBOSE_LOG) System.out.println("Fetching " + cardName + "'s ruling");
-            Document dom = Jsoup.parse(jsoupGet("http://yugioh.wikia.com/wiki/Card_Rulings:" + cardLink.substring(6)));
-            ruling = getCardInfoGeneric(dom, false);
-        }
-        catch (Exception e) { /* do nothing */ }
+        if (ENABLE_VERBOSE_LOG) System.out.println("Fetching " + cardName + "'s ruling");
+        ruling = wikiaApi.getRuling(cardLink);
 
         if ((ruling == null || "".equals(ruling)) && yugipediaRulingMap.containsKey(cardName)) {
             try {
-                ruling = yugipediaApi.getCardRuling(yugipediaRulingMap.get(cardName));
+                ruling = yugipediaApi.getCardRulingByPageId(yugipediaRulingMap.get(cardName));
                 yugipediaRulingUsedCounter.incrementAndGet();
             }
             catch (Exception e) { /* do nothing */ }
         }
 
         if (ENABLE_TIPS) {
-            try {
-                if (ENABLE_VERBOSE_LOG) System.out.println("Fetching " + cardName + "'s tips");
-                Document dom = Jsoup.parse(jsoupGet("http://yugioh.wikia.com/wiki/Card_Tips:" + cardLink.substring(6)));
-                tips = getCardInfoGeneric(dom, true);
-            }
-            catch (Exception e) { /* do nothing */ }
+            if (ENABLE_VERBOSE_LOG) System.out.println("Fetching " + cardName + "'s tips");
+            tips = wikiaApi.getTips(cardLink);
         }
 
         if (ENABLE_TRIVIA) {
-            try {
-                if (ENABLE_VERBOSE_LOG) System.out.println("Fetching " + cardName + "'s trivia");
-                Document dom = Jsoup.parse(jsoupGet("http://yugioh.wikia.com/wiki/Card_Trivia:" + cardLink.substring(6)));
-                trivia = getCardInfoGeneric(dom, false);
-            }
-            catch (Exception e) { /* do nothing */ }
+            if (ENABLE_VERBOSE_LOG) System.out.println("Fetching " + cardName + "'s trivia");
+            trivia = wikiaApi.getTrivia(cardLink);
         }
 
         if (ENABLE_VERBOSE_LOG) System.out.println("Fetching " + cardName + "'s general info");
-        Document mainDom = Jsoup.parse(jsoupGet(cardUrl));
-        CardParser parser = new CardParser(cardName, mainDom);
-        Card card = parser.parse();
+        Card card = wikiaApi.getCard(cardName, cardLink);
 
         String ocgOnly = "", tcgOnly = "";
         if (tcgCards.contains(cardName) && !ocgCards.contains(cardName)) {
@@ -399,13 +365,6 @@ public class MainParallel {
         psParms.executeUpdate();
         doneCounter.incrementAndGet();
     }
-
-    private static String getCardInfoGeneric(Document dom, boolean isTipsPage) {
-        Element content = dom.getElementById("mw-content-text");
-        return Util.getCleanedHtml(content, isTipsPage, false);
-    }
-
-
 
     //for possible future launch parameters
     private static void parseArgs(String[] args) {
