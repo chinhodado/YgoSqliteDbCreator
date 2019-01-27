@@ -1,0 +1,25 @@
+plugins {
+    id 'java'
+}
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+    implementation group: 'org.jsoup', name: 'jsoup', version: '1.8.1'
+    implementation group: 'org.json', name: 'json', version: '20180813'
+    implementation group: 'org.xerial', name: 'sqlite-jdbc', version: '3.25.2'
+
+    implementation project(':ygowikitool')
+
+    testImplementation 'junit:junit:4.12'
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src/main']
+        }
+    }
+}

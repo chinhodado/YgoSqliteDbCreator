@@ -1,3 +1,5 @@
+package com.chin.ygosqlitedbcreator;
+
 import com.chin.ygowikitool.api.YugiohWikiaApi;
 import com.chin.ygowikitool.api.YugipediaApi;
 import com.chin.ygowikitool.entity.Booster;

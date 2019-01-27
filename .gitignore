@@ -45,3 +45,9 @@ hs_err_pid*
 *.db
 *.rar
 *.zip
+
+# Ignore Gradle project-specific cache directory
+.gradle
+
+# Ignore Gradle build output directory
+build

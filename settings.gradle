@@ -1,0 +1,2 @@
+rootProject.name = 'YgoSqliteDbCreator'
+include 'ygosqlitedbcreator', 'ygowikitool'
