@@ -1,6 +1,6 @@
-package parser;
+package com.chin.ygowikitool.parser;
 
-import entity.Card;
+import com.chin.ygowikitool.entity.Card;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;

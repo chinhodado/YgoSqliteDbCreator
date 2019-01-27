@@ -1,6 +1,6 @@
-package parser;
+package com.chin.ygowikitool.parser;
 
-import entity.Booster;
+import com.chin.ygowikitool.entity.Booster;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;

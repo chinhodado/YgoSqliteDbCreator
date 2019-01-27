@@ -1,22 +1,22 @@
-package api;
+package com.chin.ygowikitool.api;
 
-import entity.Booster;
-import entity.Card;
+import com.chin.ygowikitool.entity.Booster;
+import com.chin.ygowikitool.entity.Card;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-import parser.BoosterParser;
-import parser.CardParser;
-import parser.Util;
+import com.chin.ygowikitool.parser.BoosterParser;
+import com.chin.ygowikitool.parser.CardParser;
+import com.chin.ygowikitool.parser.Util;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import static parser.Util.jsoupGet;
+import static com.chin.ygowikitool.parser.Util.jsoupGet;
 
 public class YugiohWikiaApi {
     public Map<String, String> getCardMap(boolean isTcg) throws IOException, JSONException {

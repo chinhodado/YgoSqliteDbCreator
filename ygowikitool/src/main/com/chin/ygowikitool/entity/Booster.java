@@ -1,4 +1,4 @@
-package entity;
+package com.chin.ygowikitool.entity;
 
 /**
  * Created by Chin on 22-May-17.

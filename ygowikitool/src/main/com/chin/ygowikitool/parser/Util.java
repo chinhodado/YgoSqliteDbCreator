@@ -1,4 +1,4 @@
-package parser;
+package com.chin.ygowikitool.parser;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Attribute;

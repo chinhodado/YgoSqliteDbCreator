@@ -1,4 +1,4 @@
-package api;
+package com.chin.ygowikitool.api;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -6,13 +6,13 @@ import org.json.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-import parser.Util;
+import com.chin.ygowikitool.parser.Util;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import static parser.Util.jsoupGet;
+import static com.chin.ygowikitool.parser.Util.jsoupGet;
 
 public class YugipediaApi {
 

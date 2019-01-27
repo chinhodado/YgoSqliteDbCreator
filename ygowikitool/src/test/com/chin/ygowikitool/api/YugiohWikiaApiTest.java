@@ -1,4 +1,4 @@
-package api;
+package com.chin.ygowikitool.api;
 
 import org.json.JSONException;
 import org.junit.Before;

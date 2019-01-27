@@ -1,7 +1,7 @@
-import api.YugiohWikiaApi;
-import api.YugipediaApi;
-import entity.Booster;
-import entity.Card;
+import com.chin.ygowikitool.api.YugiohWikiaApi;
+import com.chin.ygowikitool.api.YugipediaApi;
+import com.chin.ygowikitool.entity.Booster;
+import com.chin.ygowikitool.entity.Card;
 import org.json.JSONException;
 
 import java.io.IOException;
@@ -12,7 +12,7 @@ import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static parser.Util.logLine;
+import static com.chin.ygowikitool.parser.Util.logLine;
 
 public class MainParallel {
     private static List<String> cardList;

@@ -1,6 +1,6 @@
-package parser;
+package com.chin.ygowikitool.parser;
 
-import entity.Booster;
+import com.chin.ygowikitool.entity.Booster;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.junit.Before;
@@ -15,7 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
-import static parser.Util.jsoupGet;
+import static com.chin.ygowikitool.parser.Util.jsoupGet;
 
 /**
  * Created by Chin on 22-May-17.
