@@ -26,10 +26,7 @@ public class YugipediaApiTest {
 
     @Test
     public void whenGetThunderDragonTitanRulingThenReturnCorrectText() {
-        String expected = "<div>\n" +
-                " <div>\n" +
-                "  <b>Thunder Dragon Titan</b>\n" +
-                " </div> \n" +
+        String expected = "<div> \n" +
                 " <h2>OCG Rulings</h2> \n" +
                 " <ul>\n" +
                 "  <li>This monster can be Special Summoned by 2 methods; by using a card such as \"Polymerization\" to fuse 3 \"Thunder Dragon\" monsters, or by its own procedure by banishing 1 Thunder-Type monster from your hand and 1 face-up Thunder-Type Fusion Monster from your Monster Zone, other than \"Thunder Dragon Titan\", during your Main Phase. (Both methods are treated as \"properly\" Special Summoning this monster.)</li>\n" +

@@ -22,6 +22,7 @@ public class Util {
         Elements navboxes = content.select("table.navbox");
         if (!navboxes.isEmpty()) {navboxes.first().remove();} // remove the navigation box
 
+        content.select(".mobile-show").remove();         // remove the card header in yugipedia
         content.select(".nomobile").remove();            // remove the navigation box in yugipedia
         content.select("script").remove();               // remove <script> tags
         content.select("noscript").remove();             // remove <noscript> tags
