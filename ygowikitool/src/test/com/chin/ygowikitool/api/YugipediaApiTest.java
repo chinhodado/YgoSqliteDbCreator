@@ -7,7 +7,9 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.Map;
 
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 public class YugipediaApiTest {
@@ -25,7 +27,7 @@ public class YugipediaApiTest {
     }
 
     @Test
-    public void whenGetThunderDragonTitanRulingThenReturnCorrectText() {
+    public void whenGetThunderDragonTitanRulingByPageId_ThenReturnCorrectText() {
         String expected = "<div> \n" +
                 " <h2>OCG Rulings</h2> \n" +
                 " <ul>\n" +
@@ -44,5 +46,26 @@ public class YugipediaApiTest {
 
         YugipediaApi api = new YugipediaApi();
         assertEquals(expected, api.getCardRulingByPageId(rulings.get("Thunder Dragon Titan")));
+    }
+
+    @Test
+    public void whenGetSuccessProbability0RulingByCardName_ThenReturnCorrectText() {
+        YugipediaApi api = new YugipediaApi();
+        String ruling = api.getCardRulingByPageId(rulings.get("Success Probability 0%"));
+        assertThat(ruling, containsString("Destiny End Dragoon"));
+    }
+
+    @Test
+    public void whenGetArchfiendOathRulingByCardName_ThenReturnCorrectText() {
+        YugipediaApi api = new YugipediaApi();
+        String ruling = api.getCardRulingByPageId(rulings.get("Archfiend's Oath"));
+        assertThat(ruling, containsString("Spell Economics"));
+    }
+
+    @Test
+    public void whenGetLevelDownRulingByCardName_ThenReturnCorrectText() {
+        YugipediaApi api = new YugipediaApi();
+        String ruling = api.getCardRulingByPageId(rulings.get("Level Down!?"));
+        assertThat(ruling, containsString("Armed Dragon"));
     }
 }

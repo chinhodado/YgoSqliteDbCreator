@@ -27,6 +27,26 @@ public class YugipediaApi {
         }
     }
 
+    public String getCardRulingByCardName(String cardName) {
+        String encodedCardName = getEncodedCardName(cardName);
+        String url = "https://yugipedia.com/wiki/Card_Rulings:" + encodedCardName;
+
+        try {
+            Document dom = Jsoup.parse(jsoupGet(url));
+            return getCardInfoGeneric(dom, false);
+        }
+        catch (Exception e) {
+            return null;
+        }
+    }
+
+    public String getEncodedCardName(String cardName) {
+        return cardName.replaceAll("%", "%25")
+                       .replaceAll("'", "%27")
+                       .replaceAll("\\?", "%3F")
+                       .replaceAll(" ", "_");
+    }
+
     private String getCardInfoGeneric(Document dom, boolean isTipsPage) {
         Element content = dom.getElementById("mw-content-text");
         return Util.getCleanedHtml(content, isTipsPage, false);
