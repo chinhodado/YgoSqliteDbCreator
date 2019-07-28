@@ -1,5 +1,8 @@
 package com.chin.ygowikitool.entity;
 
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * Created by Chin on 13-May-17.
  */
@@ -188,6 +191,10 @@ public class Card {
 
     public String getArchetype() {
         return archetype;
+    }
+
+    public List<String> getArchetypes() {
+        return Arrays.asList(getArchetype().split(" , "));
     }
 
     public void setArchetype(String archetype) {

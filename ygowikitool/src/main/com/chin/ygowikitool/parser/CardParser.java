@@ -215,30 +215,34 @@ public class CardParser {
     }
 
     private String getArchetype(Element dom){
-        Element cardtableCategories = dom.getElementsByClass("cardtable-categories").first();
-        if (cardtableCategories == null) return "";
+        try {
+            Element cardtableCategories = dom.getElementsByClass("cardtable-categories").first();
+            if (cardtableCategories == null) return "";
 
-        Set<String> tempset = new HashSet<>();
+            Set<String> archetypes = new HashSet<>();
 
-        for (Element hlist : cardtableCategories.getElementsByClass("hlist")) {
-            Element dl = hlist.getElementsByTag("dl").first();
-            String dt = dl.getElementsByTag("dt").first().text();
-            Elements archetypes;
+            for (Element hlist : cardtableCategories.getElementsByClass("hlist")) {
+                Element dl = hlist.getElementsByTag("dl").first();
+                String dt = dl.getElementsByTag("dt").first().text();
 
-            //check if the left side contains the words archetypes
-            if (!dt.toLowerCase().contains("archetypes")) continue;
+                //check if the left side starts with the words Archetypes
+                if (!dt.startsWith("Archetypes")) continue;
 
-            archetypes = dl.getElementsByTag("dd");
+                Elements dds = dl.getElementsByTag("dd");
 
-            //for multiple archetypes
-            for (Element dd : archetypes) {
-                String a = dd.getElementsByAttribute("href").first().text();
-                tempset.add(a);
+                //for multiple archetypes
+                for (Element dd : dds) {
+                    String txt = dd.getElementsByTag("a").first().text();
+                    archetypes.add(txt);
+                }
             }
+
+            String archetype = String.join(" , ", archetypes);
+
+            return archetype;
         }
-
-        String archetype = String.join(" , ", tempset);
-
-        return archetype;
+        catch (Exception e) {
+            return "";
+        }
     }
 }
