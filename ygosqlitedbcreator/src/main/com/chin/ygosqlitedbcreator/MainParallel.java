@@ -6,11 +6,14 @@ import com.chin.ygowikitool.entity.Booster;
 import com.chin.ygowikitool.entity.Card;
 import org.json.JSONException;
 
+import javax.swing.*;
+import java.awt.*;
 import java.io.IOException;
 import java.sql.*;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -257,17 +260,39 @@ public class MainParallel {
         }
 
         Thread logThread = new Thread(() -> {
+            JFrame frame = new JFrame();
+
+            JTextArea textArea = new JTextArea();
+            textArea.setEditable(false);
+            frame.setLayout(new GridBagLayout());
+            frame.setTitle("YgoSqliteDbCreator");
+            frame.setSize(400, 200);
+            frame.setLocationRelativeTo(null);
+            frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+            GridBagConstraints constraints = new GridBagConstraints();
+            constraints.fill = GridBagConstraints.BOTH;
+            constraints.gridx = 0;
+            constraints.gridy = 0;
+            constraints.weightx = 1;
+            constraints.weighty = 1;
+            constraints.insets = new Insets(5, 5, 5, 5);
+
+            frame.add(textArea, constraints);
+            frame.setVisible(true);
+
             while (!Thread.interrupted()) {
-                System.out.print("\r");
                 int done = doneCounter.get();
                 int error = errorList.size();
                 double percentage = (double)done / totalWorkSize * 100;
-                System.out.print("Completed: " + done + "/" + totalWorkSize + "(" + percentage + "%), error: " + error + "                  ");
+                textArea.setText("Completed: " + done + "/" + totalWorkSize + "(" +
+                        String.format("%.2f", percentage) + "%), error: " + error);
 
                 try {
                     Thread.sleep(500);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
+                    frame.setVisible(false);
+                    frame.dispose();
                 }
             }
         });
