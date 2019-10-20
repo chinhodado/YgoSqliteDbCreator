@@ -14,6 +14,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -25,6 +26,9 @@ public class MainParallel {
     private static Set<String> tcgCards;
     private static Map<String, String> cardLinkTable;
 
+    private static Map<String, Set<Integer>> archetypeMap = new ConcurrentHashMap<>();
+    private static final Object archetypeMapLock = new Object();
+
     private static List<String> boosterList;
     private static Set<String> ocgBoosters;
     private static Set<String> tcgBoosters;
@@ -32,10 +36,13 @@ public class MainParallel {
 
     private static PreparedStatement psParms;
     private static PreparedStatement psBoosterInsert;
+    private static PreparedStatement psArchetypeInsert;
+    private static PreparedStatement psCardArchetypeInsert;
     private static final AtomicInteger cardDoneCounter = new AtomicInteger();
     private static final AtomicInteger boosterDoneCounter = new AtomicInteger();
     private static int iteration = 0;
     private static boolean rawText = false;
+    private static final Object psCardInsertLock = new Object();
 
     private static final YugipediaApi yugipediaApi = new YugipediaApi();
     private static Map<String, String> yugipediaRulingMap;
@@ -64,7 +71,8 @@ public class MainParallel {
 
         Statement stmt = connection.createStatement();
         String sql = "CREATE TABLE Card " +
-                "( name              TEXT NOT NULL, " +
+                "( id                INTEGER PRIMARY KEY, " +
+                "  name              TEXT NOT NULL, " +
                 "  realName          TEXT, " +      // for cards like Darkfire Soldier #1
                 "  attribute         TEXT, " +      //              "Attribute"
                 "  cardType          TEXT, " +      //              "Card type"
@@ -91,13 +99,22 @@ public class MainParallel {
                    "  tips        TEXT, "  +
                    "  trivia      TEXT, "  +
                    "  lore        TEXT, "  +
-                   "  archetype   TEXT, "  +
                    "  ocgStatus   TEXT, "  +
                    "  tcgAdvStatus TEXT, " +
                    "  tcgTrnStatus TEXT, " +
                    "  ocgOnly   INTEGER, " +
                    "  tcgOnly   INTEGER, " +
                    "  img TEXT) ";
+        stmt.executeUpdate(sql);
+
+        sql = "CREATE TABLE Archetype (id INTEGER PRIMARY KEY, name TEXT)";
+        stmt.executeUpdate(sql);
+
+        sql = "CREATE TABLE Card_Archetype (" +
+                "cardId INTEGER, " +
+                "archetypeId INTEGER, " +
+                "FOREIGN KEY(cardId) REFERENCES Card(id), " +
+                "FOREIGN KEY (archetypeId) REFERENCES Card_Archetype(id))";
         stmt.executeUpdate(sql);
 
         sql = "CREATE TABLE metadata (dataCreated TEXT NOT NULL)";
@@ -122,24 +139,29 @@ public class MainParallel {
         stmt.executeUpdate("CREATE INDEX atk_idx ON Card (atk)");
         stmt.executeUpdate("CREATE INDEX def_idx ON Card (def)");
         stmt.executeUpdate("CREATE INDEX property_idx ON Card (property)");
-        stmt.executeUpdate("CREATE INDEX archetype_idx ON Card (archetype)");
         stmt.executeUpdate("CREATE INDEX ocgStatus_idx ON Card (ocgStatus)");
         stmt.executeUpdate("CREATE INDEX tcgAdvStatus_idx ON Card (tcgAdvStatus)");
         stmt.executeUpdate("CREATE INDEX tcgTrnStatus_idx ON Card (tcgTrnStatus)");
         stmt.executeUpdate("CREATE INDEX ocgOnly_idx ON Card (ocgOnly)");
         stmt.executeUpdate("CREATE INDEX tcgOnly_idx ON Card (tcgOnly)");
+        stmt.executeUpdate("CREATE INDEX archetype_name_idx ON Archetype (name)");
+        stmt.executeUpdate("CREATE INDEX card_archetype_cardId_idx ON Card_Archetype (cardId)");
+        stmt.executeUpdate("CREATE INDEX card_archetype_archetypeId_idx ON Card_Archetype (archetypeId)");
         stmt.executeUpdate("CREATE INDEX booster_name_idx ON Booster (name)");
 
         psParms = connection.prepareStatement(
-                "INSERT INTO Card (name, realName, attribute, cardType, types, level, atk, def, passcode, " +
+                "INSERT INTO Card (id, name, realName, attribute, cardType, types, level, atk, def, passcode, " +
                 "effectTypes, materials, fusionMaterials, rank, ritualSpell, " +
                 "pendulumScale, linkMarkers, link, property, summonedBy, limitText, synchroMaterial, ritualMonster, " +
-                "ruling, tips, trivia, lore, archetype, ocgStatus, tcgAdvStatus, tcgTrnStatus, ocgOnly, tcgOnly, img) " +
+                "ruling, tips, trivia, lore, ocgStatus, tcgAdvStatus, tcgTrnStatus, ocgOnly, tcgOnly, img) " +
                 "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
 
         psBoosterInsert = connection.prepareStatement(
                 "INSERT INTO Booster (name, enReleaseDate, jpReleaseDate, skReleaseDate, worldwideReleaseDate, imgSrc) " +
                         "VALUES (?,?,?,?,?,?)");
+
+        psArchetypeInsert = connection.prepareStatement("INSERT INTO Archetype (id, name) VALUES (?,?)");
+        psCardArchetypeInsert = connection.prepareStatement("INSERT INTO Card_Archetype(cardId, archetypeId) VALUES (?,?)");
 
         logLine("Getting and processing Yugioh Wikia articles using " + NUM_THREAD + " threads.");
         Scanner in = new Scanner(System.in);
@@ -159,6 +181,8 @@ public class MainParallel {
                 }
             }
         }
+
+        persistArchetypes(stmt);
 
         logLine("Processing booster list");
         workList = boosterList;
@@ -186,6 +210,23 @@ public class MainParallel {
 
         connection.close();
         logLine("Saved to ygo.db successfully. Everything done.");
+    }
+
+    private static void persistArchetypes(Statement stmt) throws SQLException {
+        int archetypeId = 0;
+        for (String archetype : archetypeMap.keySet()) {
+            psArchetypeInsert.setInt(1, archetypeId);
+            psArchetypeInsert.setString(2, archetype);
+            psArchetypeInsert.executeUpdate();
+
+            Set<Integer> cardsInArchetype = archetypeMap.get(archetype);
+            for (Integer cardId : cardsInArchetype) {
+                psCardArchetypeInsert.setInt(1, cardId);
+                psCardArchetypeInsert.setInt(2, archetypeId);
+                psCardArchetypeInsert.executeUpdate();
+            }
+            archetypeId++;
+        }
     }
 
     private static void initializeCardList() throws IOException, JSONException {
@@ -280,7 +321,7 @@ public class MainParallel {
             frame.add(textArea, constraints);
             frame.setVisible(true);
 
-            while (!Thread.interrupted()) {
+            while (!Thread.currentThread().isInterrupted()) {
                 int done = doneCounter.get();
                 int error = errorList.size();
                 double percentage = (double)done / totalWorkSize * 100;
@@ -290,9 +331,9 @@ public class MainParallel {
                 try {
                     Thread.sleep(500);
                 } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
                     frame.setVisible(false);
                     frame.dispose();
+                    Thread.currentThread().interrupt();
                 }
             }
         });
@@ -377,20 +418,35 @@ public class MainParallel {
             ocgOnly = "1";
         }
 
+        int id = doneCounter.incrementAndGet();
+
         String[] params = new String[] { cardName, card.getRealName(), card.getAttribute(), card.getCardType(),
                 card.getTypes(), card.getLevel(), card.getAtk(), card.getDef(), card.getPasscode(),
                 card.getEffectTypes(), card.getMaterials(), card.getFusionMaterials(), card.getRank(), card.getRitualSpell(),
                 card.getPendulumScale(), card.getLinkMarkers(), card.getLink(), card.getProperty(), card.getSummonedBy(),
                 card.getLimitText(), card.getSynchroMaterial(), card.getRitualMonster(), ruling, tips, trivia,
-                card.getLore(), card.getArchetype(), card.getOcgStatus(), card.getTcgAdvStatus(), card.getTcgTrnStatus(),
+                card.getLore(), card.getOcgStatus(), card.getTcgAdvStatus(), card.getTcgTrnStatus(),
                 ocgOnly, tcgOnly, card.getImg() };
 
-        for (int i = 0; i < params.length; i++) {
-            psParms.setString(i+1, params[i]);
+        synchronized (psCardInsertLock) {
+            psParms.setInt(1, id);
+            for (int i = 0; i < params.length; i++) {
+                psParms.setString(i + 2, params[i]);
+            }
+
+            psParms.executeUpdate();
         }
 
-        psParms.executeUpdate();
-        doneCounter.incrementAndGet();
+        synchronized (archetypeMapLock) {
+            List<String> archetypes = card.getArchetypes();
+            for (String archetype : archetypes) {
+                if (archetype == null || "".equals(archetype)) continue;
+
+                archetypeMap.putIfAbsent(archetype, new HashSet<>());
+                Set<Integer> cardsInArchetype = archetypeMap.get(archetype);
+                cardsInArchetype.add(id);
+            }
+        }
     }
 
     //for possible future launch parameters
