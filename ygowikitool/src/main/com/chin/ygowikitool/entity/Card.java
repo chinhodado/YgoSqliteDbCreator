@@ -1,6 +1,6 @@
 package com.chin.ygowikitool.entity;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -10,8 +10,10 @@ public class Card {
     private String realName = "", attribute = "", cardType = "", types = "", level = "", atk = "", def = "", passcode = "",
             effectTypes = "", materials = "", fusionMaterials = "", rank = "", ritualSpell = "",
             pendulumScale = "", linkMarkers = "", link = "", property = "", summonedBy = "", limitText = "", synchroMaterial = "", ritualMonster = "",
-            lore = "", archetype = "", ocgStatus = "", tcgAdvStatus = "", tcgTrnStatus = "",
+            lore = "", ocgStatus = "", tcgAdvStatus = "", tcgTrnStatus = "",
             img = "";
+
+    private List<String> archetypes = new ArrayList<>();
 
     public String getRealName() {
         return realName;
@@ -189,16 +191,21 @@ public class Card {
         this.lore = lore;
     }
 
-    public String getArchetype() {
-        return archetype;
+    public List<String>getArchetypes() {
+        return archetypes;
     }
 
-    public List<String> getArchetypes() {
-        return Arrays.asList(getArchetype().split(" , "));
+    public void setArchetypes(List<String> archetypes) {
+        this.archetypes = archetypes;
     }
 
-    public void setArchetype(String archetype) {
-        this.archetype = archetype;
+    public String getArchetypeString() {
+        StringBuilder s = new StringBuilder();
+        for (String a : archetypes) {
+            s.append(s.length() == 0 ? "" : ", ").append(a);
+        }
+
+        return s.toString();
     }
 
     public String getOcgStatus() {

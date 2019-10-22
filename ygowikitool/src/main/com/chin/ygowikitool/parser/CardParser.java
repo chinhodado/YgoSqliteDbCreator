@@ -1,14 +1,12 @@
 package com.chin.ygowikitool.parser;
 
 import com.chin.ygowikitool.entity.Card;
-import org.jsoup.nodes.Document;
+
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by Chin on 13-May-17.
@@ -17,7 +15,7 @@ public class CardParser {
     private Element dom;
     private String cardName;
 
-    public CardParser(String cardName, Document dom) {
+    public CardParser(String cardName, Element dom) {
         this.cardName = cardName;
         Element elem = dom.getElementById("mw-content-text");
         Util.removeSupTag(elem);
@@ -28,7 +26,7 @@ public class CardParser {
         String realName = "", attribute = "", cardType = "", types = "", level = "", atk = "", def = "", passcode = "",
                 effectTypes = "", materials = "", fusionMaterials = "", rank = "", ritualSpell = "",
                 pendulumScale = "", linkMarkers = "", link = "", property = "", summonedBy = "", limitText = "",
-                synchroMaterial = "", ritualMonster = "", lore = "", archetype = "",
+                synchroMaterial = "", ritualMonster = "", lore = "",
                 ocgStatus = "", tcgAdvStatus = "", tcgTrnStatus = "", img = "";
 
         Element cardTable = dom.getElementsByClass("cardtable").first();
@@ -94,9 +92,12 @@ public class CardParser {
                     case "Pendulum Scale"               : pendulumScale   = data; break; // 1
                     case "Link Arrows"                  : {                              // Top , Bottom-Left , Bottom-Right
                         linkMarkers = data.replaceAll(" , ", ", ");
-                        linkMarkers = Arrays.stream(linkMarkers.split(", "))
-                                .map(token -> '|' + token + '|')
-                                .collect(Collectors.joining(", "));
+                        StringBuilder arrows = new StringBuilder();
+                        for (String token : linkMarkers.split(", ")) {
+                            String s = '|' + token + '|';
+                            arrows.append(arrows.length() == 0 ? "" : ", ").append(s);
+                        }
+                        linkMarkers = arrows.toString();
                         break;
                     }
                     case "Property"                     : property        = data; break; // Continuous
@@ -171,7 +172,7 @@ public class CardParser {
         }
 
         lore = getCardLore(dom);
-        archetype = getArchetype(dom);
+        List<String> archetypes = getArchetypes(dom);
 
         Card card = new Card();
         card.setRealName(realName);
@@ -196,11 +197,12 @@ public class CardParser {
         card.setSynchroMaterial(synchroMaterial);
         card.setRitualMonster(ritualMonster);
         card.setLore(lore);
-        card.setArchetype(archetype);
         card.setOcgStatus(ocgStatus);
         card.setTcgAdvStatus(tcgAdvStatus);
         card.setTcgTrnStatus(tcgTrnStatus);
         card.setImg(img);
+
+        card.setArchetypes(archetypes);
 
         return card;
     }
@@ -214,12 +216,12 @@ public class CardParser {
         return effect;
     }
 
-    private String getArchetype(Element dom){
+    private List<String> getArchetypes(Element dom){
         try {
             Element cardtableCategories = dom.getElementsByClass("cardtable-categories").first();
-            if (cardtableCategories == null) return "";
+            if (cardtableCategories == null) return new ArrayList<>();
 
-            Set<String> archetypes = new HashSet<>();
+            List<String> archetypes = new ArrayList<>();
 
             for (Element hlist : cardtableCategories.getElementsByClass("hlist")) {
                 Element dl = hlist.getElementsByTag("dl").first();
@@ -237,12 +239,10 @@ public class CardParser {
                 }
             }
 
-            String archetype = String.join(" , ", archetypes);
-
-            return archetype;
+            return archetypes;
         }
         catch (Exception e) {
-            return "";
+            return new ArrayList<>();
         }
     }
 }
