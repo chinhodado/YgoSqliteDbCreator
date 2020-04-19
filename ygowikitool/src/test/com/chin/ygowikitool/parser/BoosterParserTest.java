@@ -51,7 +51,7 @@ public class BoosterParserTest {
     @Parameterized.Parameters(name = "{0}")
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][] {
-            { "Hidden Arsenal", "http://yugioh.wikia.com/wiki/Hidden_Arsenal", "November 10, 2009", null, "May 25, 2010", null, "HA01" },
+            { "Hidden Arsenal", "http://yugioh.wikia.com/wiki/Hidden_Arsenal", "November 10, 2009", null, "May 24, 2010", null, "HA01" },
             { "Premium Pack 10", "http://yugioh.wikia.com/wiki/Premium_Pack_10", null, "March 8, 2007", null, null, "PP10" },
             { "Invasion of Chaos", "http://yugioh.wikia.com/wiki/Invasion_of_Chaos", "March 1, 2004", null, "June 28, 2005", "October 18, 2005", "IOC" },
         });
