@@ -29,10 +29,10 @@ public class YugiohWikiaApi {
         // a day or two before showing up in here
         String url;
         if (isTcg) {
-            url = "http://yugioh.wikia.com/api/v1/Articles/List?category=TCG_cards&limit=5000&namespaces=0";
+            url = "https://yugioh.wikia.com/api/v1/Articles/List?category=TCG_cards&limit=5000&namespaces=0";
         }
         else {
-            url = "http://yugioh.wikia.com/api/v1/Articles/List?category=OCG_cards&limit=5000&namespaces=0";
+            url = "https://yugioh.wikia.com/api/v1/Articles/List?category=OCG_cards&limit=5000&namespaces=0";
         }
 
         if (offset != null) {
@@ -71,10 +71,10 @@ public class YugiohWikiaApi {
     private Map<String, String> getBoosterMap(String offset, Map<String, String> boosterMap, boolean isTcg) throws JSONException, IOException {
         String url;
         if (isTcg) {
-            url = "http://yugioh.wikia.com/api/v1/Articles/List?category=TCG_Booster_Packs&limit=5000&namespaces=0";
+            url = "https://yugioh.wikia.com/api/v1/Articles/List?category=TCG_Booster_Packs&limit=5000&namespaces=0";
         }
         else {
-            url = "http://yugioh.wikia.com/api/v1/Articles/List?category=OCG_Booster_Packs&limit=5000&namespaces=0";
+            url = "https://yugioh.wikia.com/api/v1/Articles/List?category=OCG_Booster_Packs&limit=5000&namespaces=0";
         }
 
         if (offset != null) {
@@ -106,7 +106,7 @@ public class YugiohWikiaApi {
     }
 
     public Booster getBooster(String boosterName, String boosterLink) throws IOException {
-        String boosterUrl = "http://yugioh.wikia.com" + boosterLink;
+        String boosterUrl = "https://yugioh.wikia.com" + boosterLink;
         Document mainDom = Jsoup.parse(jsoupGet(boosterUrl));
         BoosterParser parser = new BoosterParser(boosterName, mainDom);
         Booster booster = parser.parse();
@@ -115,7 +115,7 @@ public class YugiohWikiaApi {
     }
 
     public Card getCard(String cardName, String cardLink) throws IOException {
-        String cardUrl = "http://yugioh.wikia.com" + cardLink;
+        String cardUrl = "https://yugioh.wikia.com" + cardLink;
         Document mainDom = Jsoup.parse(jsoupGet(cardUrl));
         CardParser parser = new CardParser(cardName, mainDom);
         Card card = parser.parse();
@@ -126,7 +126,7 @@ public class YugiohWikiaApi {
     public String getRuling(String cardLink) {
         String ruling = "";
         try {
-            Document dom = Jsoup.parse(jsoupGet("http://yugioh.wikia.com/wiki/Card_Rulings:" + cardLink.substring(6)));
+            Document dom = Jsoup.parse(jsoupGet("https://yugioh.wikia.com/wiki/Card_Rulings:" + cardLink.substring(6)));
             ruling = getCardInfoGeneric(dom, false);
         }
         catch (Exception e) { /* do nothing */ }
@@ -136,7 +136,7 @@ public class YugiohWikiaApi {
     public String getTips(String cardLink) {
         String tips = "";
         try {
-            Document dom = Jsoup.parse(jsoupGet("http://yugioh.wikia.com/wiki/Card_Tips:" + cardLink.substring(6)));
+            Document dom = Jsoup.parse(jsoupGet("https://yugioh.wikia.com/wiki/Card_Tips:" + cardLink.substring(6)));
             tips = getCardInfoGeneric(dom, true);
         }
         catch (Exception e) { /* do nothing */ }
@@ -146,7 +146,7 @@ public class YugiohWikiaApi {
     public String getTrivia(String cardLink) {
         String trivia = "";
         try {
-            Document dom = Jsoup.parse(jsoupGet("http://yugioh.wikia.com/wiki/Card_Trivia:" + cardLink.substring(6)));
+            Document dom = Jsoup.parse(jsoupGet("https://yugioh.wikia.com/wiki/Card_Trivia:" + cardLink.substring(6)));
             trivia = getCardInfoGeneric(dom, false);
         }
         catch (Exception e) { /* do nothing */ }

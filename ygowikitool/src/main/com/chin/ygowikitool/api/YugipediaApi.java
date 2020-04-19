@@ -57,7 +57,7 @@ public class YugipediaApi {
     }
 
     private Map<String, String> getRulingMap(String cmcontinue, Map<String, String> rulingMap) throws JSONException, IOException {
-        String url = "http://yugipedia.com/api.php?action=query&format=json&list=categorymembers" +
+        String url = "https://yugipedia.com/api.php?action=query&format=json&list=categorymembers" +
                 "&cmtitle=Category:Card_Rulings&cmlimit=500";
 
         if (cmcontinue != null) {
