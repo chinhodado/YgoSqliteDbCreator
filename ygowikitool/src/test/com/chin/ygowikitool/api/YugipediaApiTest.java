@@ -40,7 +40,7 @@ public class YugipediaApiTest {
                 "  <li>The effect of this card that destroys 1 card on the field is a Quick Effect. (It does not target. This effect is activated by chaining directly to the effect of a Thunder-Type monster activated from your or your opponent's hand.)</li>\n" +
                 " </ul> \n" +
                 " <ul>\n" +
-                "  <li>The effect of this card that allows you to banish 2 Thunder-Type monsters from your Graveyard instead when it would be destroyed by battle or card effect is a Continuous Effect. (This effect can be applied during the Damage Step.)</li>\n" +
+                "  <li>The effect of this card that allows you to banish 2 Thunder-Type monsters from your Graveyard instead when it would be destroyed by card effect is a Continuous Effect. (This effect can be applied during the Damage Step.)</li>\n" +
                 " </ul>     \n" +
                 "</div>";
 
