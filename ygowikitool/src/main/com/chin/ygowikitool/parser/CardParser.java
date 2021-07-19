@@ -33,7 +33,7 @@ public class CardParser {
         Elements rows = cardTable.getElementsByClass("cardtablerow");
 
         try {
-            Element imgAnchor = dom.getElementsByClass("cardtable-cardimage").first().getElementsByClass("image-thumbnail").first();
+            Element imgAnchor = dom.getElementsByClass("cardtable-cardimage").first().getElementsByClass("image").first();
             String imgUrl = imgAnchor.attr("href");
             img = Util.getShortenedImageLink(imgUrl);
         }

@@ -121,7 +121,7 @@ public class Util {
     }
 
     private static final Pattern IMG_URL_PATTERN =
-            Pattern.compile("http(s?)://vignette(\\d?)\\.wikia\\.nocookie\\.net/yugioh/images/./(.*?)/(.*?)/.*");
+            Pattern.compile("http(s?)://static(\\d?)\\.wikia\\.nocookie\\.net/yugioh/images/./(.*?)/(.*?)/.*");
     public static String getShortenedImageLink(String imgUrl) {
         try {
             Matcher m = IMG_URL_PATTERN.matcher(imgUrl);
