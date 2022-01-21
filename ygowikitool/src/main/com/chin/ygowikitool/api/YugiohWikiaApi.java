@@ -18,7 +18,8 @@ import java.util.Map;
 
 import static com.chin.ygowikitool.parser.Util.jsoupGet;
 
-public class YugiohWikiaApi {
+public class YugiohWikiaApi implements YugiohApi {
+    @Override
     public Map<String, String> getCardMap(boolean isTcg) throws IOException, JSONException {
         return getCardMap(null, new HashMap<>(8192), isTcg);
     }
@@ -64,6 +65,7 @@ public class YugiohWikiaApi {
         }
     }
 
+    @Override
     public Map<String, String> getBoosterMap(boolean isTcg) throws IOException, JSONException {
         return getBoosterMap(null, new HashMap<>(), isTcg);
     }
@@ -105,6 +107,7 @@ public class YugiohWikiaApi {
         }
     }
 
+    @Override
     public Booster getBooster(String boosterName, String boosterLink) throws IOException {
         String boosterUrl = "https://yugioh.wikia.com" + boosterLink;
         Document mainDom = Jsoup.parse(jsoupGet(boosterUrl));
@@ -114,6 +117,7 @@ public class YugiohWikiaApi {
         return booster;
     }
 
+    @Override
     public Card getCard(String cardName, String cardLink) throws IOException {
         String cardUrl = "https://yugioh.wikia.com" + cardLink;
         Document mainDom = Jsoup.parse(jsoupGet(cardUrl));
@@ -123,6 +127,7 @@ public class YugiohWikiaApi {
         return card;
     }
 
+    @Override
     public String getRuling(String cardLink) {
         String ruling = "";
         try {
@@ -133,6 +138,7 @@ public class YugiohWikiaApi {
         return ruling;
     }
 
+    @Override
     public String getTips(String cardLink) {
         String tips = "";
         try {
@@ -143,6 +149,7 @@ public class YugiohWikiaApi {
         return tips;
     }
 
+    @Override
     public String getTrivia(String cardLink) {
         String trivia = "";
         try {

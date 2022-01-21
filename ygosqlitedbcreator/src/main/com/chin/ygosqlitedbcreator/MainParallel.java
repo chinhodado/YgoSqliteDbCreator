@@ -1,5 +1,6 @@
 package com.chin.ygosqlitedbcreator;
 
+import com.chin.ygowikitool.api.YugiohApi;
 import com.chin.ygowikitool.api.YugiohWikiaApi;
 import com.chin.ygowikitool.api.YugipediaApi;
 import com.chin.ygowikitool.entity.Booster;
@@ -48,7 +49,7 @@ public class MainParallel {
     private static Map<String, String> yugipediaRulingMap;
     private static final AtomicInteger yugipediaRulingUsedCounter = new AtomicInteger();
 
-    private static final YugiohWikiaApi wikiaApi = new YugiohWikiaApi();
+    private static final YugiohApi wikiaApi = new YugiohWikiaApi();
 
     // settings
     private static final boolean ENABLE_VERBOSE_LOG = false;
