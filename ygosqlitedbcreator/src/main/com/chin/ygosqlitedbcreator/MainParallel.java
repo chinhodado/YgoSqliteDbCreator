@@ -49,7 +49,7 @@ public class MainParallel {
     private static Map<String, String> yugipediaRulingMap;
     private static final AtomicInteger yugipediaRulingUsedCounter = new AtomicInteger();
 
-    private static final YugiohApi wikiaApi = new YugiohWikiaApi();
+    private static final YugiohApi YUGIOH_API = new YugiohWikiaApi();
 
     // settings
     private static final boolean ENABLE_VERBOSE_LOG = false;
@@ -232,11 +232,11 @@ public class MainParallel {
 
     private static void initializeCardList() throws IOException, JSONException {
         logLine("Fetching TCG card list");
-        Map<String, String> tcgCardMap = wikiaApi.getCardMap(true);
+        Map<String, String> tcgCardMap = YUGIOH_API.getCardMap(true);
         tcgCards = new HashSet<>(tcgCardMap.keySet());
 
         logLine("Fetching OCG card list");
-        Map<String, String> ocgCardMap = wikiaApi.getCardMap(false);
+        Map<String, String> ocgCardMap = YUGIOH_API.getCardMap(false);
         ocgCards = new HashSet<>(ocgCardMap.keySet());
 
         cardLinkTable = new HashMap<>(tcgCardMap);
@@ -246,11 +246,11 @@ public class MainParallel {
 
     private static void initializeBoosterList() throws IOException, JSONException {
         logLine("Fetching TCG booster list");
-        Map<String, String> tcgBoosterMap = wikiaApi.getBoosterMap(true);
+        Map<String, String> tcgBoosterMap = YUGIOH_API.getBoosterMap(true);
         tcgBoosters = new HashSet<>(tcgBoosterMap.keySet());
 
         logLine("Fetching OCG booster list");
-        Map<String, String> ocgBoosterMap = wikiaApi.getBoosterMap(false);
+        Map<String, String> ocgBoosterMap = YUGIOH_API.getBoosterMap(false);
         ocgBoosters = new HashSet<>(ocgBoosterMap.keySet());
 
         boosterLinkTable = new HashMap<>(tcgBoosterMap);
@@ -362,7 +362,7 @@ public class MainParallel {
     private static void processBooster(String boosterName, AtomicInteger doneCounter) throws IOException, SQLException {
         String boosterLink = boosterLinkTable.get(boosterName);
         if (ENABLE_VERBOSE_LOG) System.out.println("Fetching " + boosterName + "'s general info");
-        Booster booster = wikiaApi.getBooster(boosterName, boosterLink);
+        Booster booster = YUGIOH_API.getBooster(boosterName, boosterLink);
 
         psBoosterInsert.setString(1, boosterName);
         psBoosterInsert.setString(2, booster.getEnReleaseDate());
@@ -387,7 +387,7 @@ public class MainParallel {
         String cardLink = cardLinkTable.get(cardName);
 
         if (ENABLE_VERBOSE_LOG) System.out.println("Fetching " + cardName + "'s ruling");
-        ruling = wikiaApi.getRuling(cardLink);
+        ruling = YUGIOH_API.getRuling(cardLink);
 
         if ((ruling == null || "".equals(ruling)) && yugipediaRulingMap.containsKey(cardName)) {
             try {
@@ -399,16 +399,16 @@ public class MainParallel {
 
         if (ENABLE_TIPS) {
             if (ENABLE_VERBOSE_LOG) System.out.println("Fetching " + cardName + "'s tips");
-            tips = wikiaApi.getTips(cardLink);
+            tips = YUGIOH_API.getTips(cardLink);
         }
 
         if (ENABLE_TRIVIA) {
             if (ENABLE_VERBOSE_LOG) System.out.println("Fetching " + cardName + "'s trivia");
-            trivia = wikiaApi.getTrivia(cardLink);
+            trivia = YUGIOH_API.getTrivia(cardLink);
         }
 
         if (ENABLE_VERBOSE_LOG) System.out.println("Fetching " + cardName + "'s general info");
-        Card card = wikiaApi.getCard(cardName, cardLink);
+        Card card = YUGIOH_API.getCard(cardName, cardLink);
 
         String ocgOnly = "", tcgOnly = "";
         if (tcgCards.contains(cardName) && !ocgCards.contains(cardName)) {
