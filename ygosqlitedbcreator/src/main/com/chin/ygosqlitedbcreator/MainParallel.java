@@ -1,25 +1,40 @@
 package com.chin.ygosqlitedbcreator;
 
-import com.chin.ygowikitool.api.YugiohApi;
-import com.chin.ygowikitool.api.YugiohWikiaApi;
-import com.chin.ygowikitool.api.YugipediaApi;
-import com.chin.ygowikitool.entity.Booster;
-import com.chin.ygowikitool.entity.Card;
-import org.json.JSONException;
+import static com.chin.ygowikitool.parser.Util.logLine;
 
-import javax.swing.*;
-import java.awt.*;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.io.IOException;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Scanner;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.chin.ygowikitool.parser.Util.logLine;
+import javax.swing.JFrame;
+import javax.swing.JTextArea;
+import javax.swing.WindowConstants;
+
+import org.json.JSONException;
+
+import com.chin.ygowikitool.api.YugiohApi;
+import com.chin.ygowikitool.api.YugipediaApi;
+import com.chin.ygowikitool.entity.Booster;
+import com.chin.ygowikitool.entity.Card;
 
 public class MainParallel {
     private static List<String> cardList;
@@ -47,12 +62,11 @@ public class MainParallel {
 
     private static final YugipediaApi yugipediaApi = new YugipediaApi();
     private static Map<String, String> yugipediaRulingMap;
-    private static final AtomicInteger yugipediaRulingUsedCounter = new AtomicInteger();
 
-    private static final YugiohApi YUGIOH_API = new YugiohWikiaApi();
+    private static final YugiohApi YUGIOH_API = new YugipediaApi();
 
     // settings
-    private static final boolean ENABLE_VERBOSE_LOG = false;
+    private static final boolean ENABLE_VERBOSE_LOG = true;
     private static final boolean ENABLE_TRIVIA = true;
     private static final boolean ENABLE_TIPS = true;
     private static final int NUM_THREAD = 8;
@@ -203,7 +217,6 @@ public class MainParallel {
 
         System.out.println();
         logLine("Completed all iterations.");
-        logLine("Yugipedia ruling used: " + yugipediaRulingUsedCounter);
 
         // Dump the database contents to a file
         stmt.executeUpdate("backup to ygo.db");
@@ -231,7 +244,19 @@ public class MainParallel {
     }
 
     private static void initializeCardList() throws IOException, JSONException {
-        logLine("Fetching TCG card list");
+//        logLine("Fetching Wikia TCG card list");
+//        YugiohWikiaApi yugiohWikiaApi = new YugiohWikiaApi();
+//        Map<String, String> tcgCardMapWikia = yugiohWikiaApi.getCardMap(true);
+//        Set<String> tcgCardsWikia = new HashSet<>(tcgCardMapWikia.keySet());
+//
+//        logLine("Fetching Wikia OCG card list");
+//        Map<String, String> ocgCardMapWikia = yugiohWikiaApi.getCardMap(false);
+//        Set<String> ocgCardsWikia = new HashSet<>(ocgCardMapWikia.keySet());
+//
+//        Map<String, String> cardLinkTableWikia = new HashMap<>(tcgCardMapWikia);
+//        ocgCardMapWikia.forEach(cardLinkTableWikia::putIfAbsent);
+//        List<String> cardListWikia = new ArrayList<>(cardLinkTableWikia.keySet());
+
         Map<String, String> tcgCardMap = YUGIOH_API.getCardMap(true);
         tcgCards = new HashSet<>(tcgCardMap.keySet());
 
@@ -242,6 +267,15 @@ public class MainParallel {
         cardLinkTable = new HashMap<>(tcgCardMap);
         ocgCardMap.forEach(cardLinkTable::putIfAbsent);
         cardList = new ArrayList<>(cardLinkTable.keySet());
+
+//        Set<String> set1 = new HashSet<>(cardList);
+//        Set<String> setWikia = new HashSet<>(cardListWikia);
+//        setWikia.removeAll(set1);
+//        logLine("Cards in Wikia but not in Yugipedia: ");
+//        System.out.println(setWikia);
+
+        logLine("tcgCards: " + tcgCards.size() + ", ocgCards: " + ocgCards.size() + ", cardList: " + cardList.size());
+//        logLine("tcgCardsWikia: " + tcgCardsWikia.size() + ", ocgCardsWikia: " + ocgCardsWikia.size() + ", cardListWikia: " + cardListWikia.size());
     }
 
     private static void initializeBoosterList() throws IOException, JSONException {
@@ -292,6 +326,8 @@ public class MainParallel {
                     try {
                         workFunction.processItem(card, doneCounter);
                     } catch (Exception e) {
+                        System.out.println("Error with " + card);
+                        e.printStackTrace();
                         errorList.add(card);
                     }
                 }
@@ -388,14 +424,6 @@ public class MainParallel {
 
         if (ENABLE_VERBOSE_LOG) System.out.println("Fetching " + cardName + "'s ruling");
         ruling = YUGIOH_API.getRuling(cardLink);
-
-        if ((ruling == null || "".equals(ruling)) && yugipediaRulingMap.containsKey(cardName)) {
-            try {
-                ruling = yugipediaApi.getCardRulingByPageId(yugipediaRulingMap.get(cardName));
-                yugipediaRulingUsedCounter.incrementAndGet();
-            }
-            catch (Exception e) { /* do nothing */ }
-        }
 
         if (ENABLE_TIPS) {
             if (ENABLE_VERBOSE_LOG) System.out.println("Fetching " + cardName + "'s tips");

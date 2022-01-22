@@ -1,31 +1,24 @@
 package com.chin.ygowikitool.api;
 
+import static com.chin.ygowikitool.parser.Util.jsoupGet;
+
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+
+import com.chin.ygowikitool.entity.Booster;
+import com.chin.ygowikitool.entity.Card;
 import com.chin.ygowikitool.parser.Util;
+import com.chin.ygowikitool.parser.YugipediaCardParser;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-
-import static com.chin.ygowikitool.parser.Util.jsoupGet;
-
-public class YugipediaApi {
-
-    public String getCardRulingByPageId(String pageid) {
-        try {
-            Document dom = Jsoup.parse(jsoupGet("https://yugipedia.com/?curid=" + pageid));
-            return getCardInfoGeneric(dom, false);
-        }
-        catch (Exception e) {
-            /* do nothing */
-            return null;
-        }
-    }
+public class YugipediaApi implements YugiohApi {
 
     public String getCardRulingByCardName(String cardName) {
         String encodedCardName = getEncodedCardName(cardName);
@@ -91,5 +84,91 @@ public class YugipediaApi {
         else {
             return rulingMap;
         }
+    }
+
+    @Override
+    public Map<String, String> getCardMap(boolean isTcg) throws IOException, JSONException {
+        return getCardMap(null, new HashMap<>(8192), isTcg);
+    }
+
+    private Map<String, String> getCardMap(String cmcontinue, Map<String, String> cardMap, boolean isTcg) throws JSONException, IOException {
+        String url;
+        if (isTcg) {
+            url = "https://yugipedia.com/api.php?action=query&format=json&list=categorymembers&cmtitle=Category:TCG_cards&cmlimit=500";
+        }
+        else {
+            url = "https://yugipedia.com/api.php?action=query&format=json&list=categorymembers&cmtitle=Category:OCG_cards&cmlimit=500";
+        }
+
+        if (cmcontinue != null) {
+            url = url + "&cmcontinue=" + cmcontinue;
+        }
+        String jsonString = jsoupGet(url);
+
+        JSONObject myJSON = new JSONObject(jsonString);
+        JSONArray myArray = myJSON.getJSONObject("query").getJSONArray("categorymembers");
+        for (int i = 0; i < myArray.length(); i++) {
+            JSONObject articleInfo = myArray.getJSONObject(i);
+            String title = articleInfo.getString("title");
+
+            if (title.trim().endsWith("(temp)")) {
+                continue;
+            }
+
+            if (!cardMap.containsKey(title)) {
+                String pageid = articleInfo.getLong("pageid") + "";
+                cardMap.put(title, pageid);
+            }
+        }
+
+        if (myJSON.has("continue")) {
+            String nextCmcontinue = myJSON.getJSONObject("continue").getString("cmcontinue");
+            return getCardMap(nextCmcontinue, cardMap, isTcg);
+        }
+        else {
+            return cardMap;
+        }
+    }
+
+    @Override
+    public Map<String, String> getBoosterMap(boolean isTcg) throws IOException, JSONException {
+        return new HashMap<>();
+    }
+
+    @Override
+    public Booster getBooster(String boosterName, String boosterLink) throws IOException {
+        return null;
+    }
+
+    @Override
+    public Card getCard(String cardName, String pageid) throws IOException {
+        String cardUrl = "https://yugipedia.com/?curid=" + pageid;
+        Document mainDom = Jsoup.parse(jsoupGet(cardUrl));
+        YugipediaCardParser parser = new YugipediaCardParser(cardName, mainDom);
+        Card card = parser.parse();
+
+        return card;
+    }
+
+    @Override
+    public String getRuling(String pageid) {
+        try {
+            Document dom = Jsoup.parse(jsoupGet("https://yugipedia.com/?curid=" + pageid));
+            return getCardInfoGeneric(dom, false);
+        }
+        catch (Exception e) {
+            /* do nothing */
+            return null;
+        }
+    }
+
+    @Override
+    public String getTips(String cardLink) {
+        return null;
+    }
+
+    @Override
+    public String getTrivia(String cardLink) {
+        return null;
     }
 }
