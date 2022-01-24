@@ -60,13 +60,10 @@ public class MainParallel {
     private static boolean rawText = false;
     private static final Object psCardInsertLock = new Object();
 
-    private static final YugipediaApi yugipediaApi = new YugipediaApi();
-    private static Map<String, String> yugipediaRulingMap;
-
     private static final YugiohApi YUGIOH_API = new YugipediaApi();
 
     // settings
-    private static final boolean ENABLE_VERBOSE_LOG = true;
+    private static final boolean ENABLE_VERBOSE_LOG = false;
     private static final boolean ENABLE_TRIVIA = true;
     private static final boolean ENABLE_TIPS = true;
     private static final int NUM_THREAD = 8;
@@ -78,8 +75,7 @@ public class MainParallel {
         initializeCardList();
         initializeBoosterList();
 
-        logLine("Fetching ruling list from Yugipedia");
-        yugipediaRulingMap = yugipediaApi.getRulingMap();
+        YUGIOH_API.initialize();
 
         Class.forName("org.sqlite.JDBC");
         Connection connection = DriverManager.getConnection("jdbc:sqlite::memory:");
@@ -183,6 +179,10 @@ public class MainParallel {
 
         logLine("Processing card list");
         List<String> workList = cardList;
+        boolean trialMode = true;
+        if (trialMode) {
+            workList = cardList.subList(0, 100);
+        }
         int totalCards = cardList.size();
         while (!workList.isEmpty()) {
             iteration++;
@@ -423,16 +423,16 @@ public class MainParallel {
         String cardLink = cardLinkTable.get(cardName);
 
         if (ENABLE_VERBOSE_LOG) System.out.println("Fetching " + cardName + "'s ruling");
-        ruling = YUGIOH_API.getRuling(cardLink);
+        ruling = YUGIOH_API.getRuling(cardName);
 
         if (ENABLE_TIPS) {
             if (ENABLE_VERBOSE_LOG) System.out.println("Fetching " + cardName + "'s tips");
-            tips = YUGIOH_API.getTips(cardLink);
+            tips = YUGIOH_API.getTips(cardName);
         }
 
         if (ENABLE_TRIVIA) {
             if (ENABLE_VERBOSE_LOG) System.out.println("Fetching " + cardName + "'s trivia");
-            trivia = YUGIOH_API.getTrivia(cardLink);
+            trivia = YUGIOH_API.getTrivia(cardName);
         }
 
         if (ENABLE_VERBOSE_LOG) System.out.println("Fetching " + cardName + "'s general info");

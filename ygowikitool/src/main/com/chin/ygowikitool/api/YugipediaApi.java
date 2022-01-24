@@ -1,6 +1,7 @@
 package com.chin.ygowikitool.api;
 
 import static com.chin.ygowikitool.parser.Util.jsoupGet;
+import static com.chin.ygowikitool.parser.Util.logLine;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -19,6 +20,19 @@ import com.chin.ygowikitool.parser.Util;
 import com.chin.ygowikitool.parser.YugipediaCardParser;
 
 public class YugipediaApi implements YugiohApi {
+    private Map<String, String> yugipediaRulingMap;
+    private Map<String, String> yugipediaTipMap;
+    private Map<String, String> yugipediaTriviaMap;
+
+    @Override
+    public void initialize() throws IOException {
+        logLine("Fetching ruling list from Yugipedia");
+        yugipediaRulingMap = getRulingMap();
+        logLine("Fetching tip list from Yugipedia");
+        yugipediaTipMap = getTipMap();
+        logLine("Fetching trivia list from Yugipedia");
+        yugipediaTriviaMap = getTriviaMap();
+    }
 
     public String getCardRulingByCardName(String cardName) {
         String encodedCardName = getEncodedCardName(cardName);
@@ -46,12 +60,19 @@ public class YugipediaApi implements YugiohApi {
     }
 
     public Map<String, String> getRulingMap() throws IOException, JSONException {
-        return getRulingMap(null, new HashMap<>());
+        return getCategoryMap("Card_Rulings", "Card Rulings:", null, new HashMap<>());
     }
 
-    private Map<String, String> getRulingMap(String cmcontinue, Map<String, String> rulingMap) throws JSONException, IOException {
-        String url = "https://yugipedia.com/api.php?action=query&format=json&list=categorymembers" +
-                "&cmtitle=Category:Card_Rulings&cmlimit=500";
+    public Map<String, String> getTipMap() throws IOException, JSONException {
+        return getCategoryMap("Card_Tips", "Card Tips:", null, new HashMap<>());
+    }
+
+    public Map<String, String> getTriviaMap() throws IOException, JSONException {
+        return getCategoryMap("Card_Trivia", "Card Trivia:", null, new HashMap<>());
+    }
+
+    private Map<String, String> getCategoryMap(String categoryName, String titleCategorySubstring, String cmcontinue, Map<String, String> pageIdMap) throws JSONException, IOException {
+        String url = "https://yugipedia.com/api.php?action=query&format=json&list=categorymembers&cmtitle=Category:" + categoryName + "&cmlimit=500";
 
         if (cmcontinue != null) {
             url = url + "&cmcontinue=" + cmcontinue;
@@ -63,26 +84,26 @@ public class YugipediaApi implements YugiohApi {
         for (int i = 0; i < myArray.length(); i++) {
             JSONObject articleInfo = myArray.getJSONObject(i);
             String title = articleInfo.getString("title");
-            if (!title.contains("Card Rulings:")) {
+            if (!title.contains(titleCategorySubstring)) {
                 continue;
             }
 
-            String cardName = title.substring("Card Rulings:".length());
+            String cardName = title.substring(titleCategorySubstring.length());
             if (cardName.trim().endsWith("(temp)")) {
                 continue;
             }
-            if (!rulingMap.containsKey(cardName)) {
+            if (!pageIdMap.containsKey(cardName)) {
                 String pageid = articleInfo.getLong("pageid") + "";
-                rulingMap.put(cardName, pageid);
+                pageIdMap.put(cardName, pageid);
             }
         }
 
         if (myJSON.has("continue")) {
             String nextCmcontinue = myJSON.getJSONObject("continue").getString("cmcontinue");
-            return getRulingMap(nextCmcontinue, rulingMap);
+            return getCategoryMap(categoryName, titleCategorySubstring, nextCmcontinue, pageIdMap);
         }
         else {
-            return rulingMap;
+            return pageIdMap;
         }
     }
 
@@ -131,7 +152,7 @@ public class YugipediaApi implements YugiohApi {
     }
 
     @Override
-    public Map<String, String> getBoosterMap(boolean isTcg) throws IOException, JSONException {
+    public Map<String, String> getBoosterMap(boolean isTcg) throws JSONException {
         return new HashMap<>();
     }
 
@@ -151,7 +172,24 @@ public class YugipediaApi implements YugiohApi {
     }
 
     @Override
-    public String getRuling(String pageid) {
+    public String getRuling(String cardName) {
+        String pageid = yugipediaRulingMap.get(cardName);
+        return getPageContentGeneric(pageid);
+    }
+
+    @Override
+    public String getTips(String cardName) {
+        String pageid = yugipediaTipMap.get(cardName);
+        return getPageContentGeneric(pageid);
+    }
+
+    @Override
+    public String getTrivia(String cardName) {
+        String pageid = yugipediaTriviaMap.get(cardName);
+        return getPageContentGeneric(pageid);
+    }
+
+    private String getPageContentGeneric(String pageid) {
         try {
             Document dom = Jsoup.parse(jsoupGet("https://yugipedia.com/?curid=" + pageid));
             return getCardInfoGeneric(dom, false);
@@ -160,15 +198,5 @@ public class YugipediaApi implements YugiohApi {
             /* do nothing */
             return null;
         }
-    }
-
-    @Override
-    public String getTips(String cardLink) {
-        return null;
-    }
-
-    @Override
-    public String getTrivia(String cardLink) {
-        return null;
     }
 }

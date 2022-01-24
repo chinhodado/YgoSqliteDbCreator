@@ -20,6 +20,11 @@ import static com.chin.ygowikitool.parser.Util.jsoupGet;
 
 public class YugiohWikiaApi implements YugiohApi {
     @Override
+    public void initialize() {
+
+    }
+
+    @Override
     public Map<String, String> getCardMap(boolean isTcg) throws IOException, JSONException {
         return getCardMap(null, new HashMap<>(8192), isTcg);
     }

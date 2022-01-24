@@ -13,18 +13,22 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 public class YugipediaApiTest {
-    private static Map<String, String> rulings;
-
+    private static YugipediaApi api;
     @BeforeClass
     public static void setupAll() throws IOException, JSONException {
-        YugipediaApi api = new YugipediaApi();
-        rulings = api.getRulingMap();
+        api = new YugipediaApi();
+        api.initialize();
     }
 
-    @Test
-    public void whenGetRulingListThenItContainsSangan() {
-        assertTrue(rulings.containsKey("Sangan"));
-    }
+//    @Test
+//    public void whenGetRulingListThenItContainsSangan() {
+//        assertTrue(rulings.containsKey("Sangan"));
+//    }
+//
+//    @Test
+//    public void whenGetTriviaListThenItContainsFiberJar() {
+//        assertTrue(trivia.containsKey("Fiber Jar"));
+//    }
 
     @Test
     public void whenGetThunderDragonTitanRulingByPageId_ThenReturnCorrectText() {
@@ -44,28 +48,30 @@ public class YugipediaApiTest {
                 " </ul>     \n" +
                 "</div>";
 
-        YugipediaApi api = new YugipediaApi();
-        assertEquals(expected, api.getRuling(rulings.get("Thunder Dragon Titan")));
+        assertEquals(expected, api.getRuling("Thunder Dragon Titan"));
     }
 
     @Test
-    public void whenGetSuccessProbability0RulingByCardName_ThenReturnCorrectText() {
-        YugipediaApi api = new YugipediaApi();
-        String ruling = api.getRuling(rulings.get("Success Probability 0%"));
+    public void whenGetSuccessProbability0Ruling_ThenReturnCorrectText() {
+        String ruling = api.getRuling("Success Probability 0%");
         assertThat(ruling, containsString("Destiny End Dragoon"));
     }
 
     @Test
-    public void whenGetArchfiendOathRulingByCardName_ThenReturnCorrectText() {
-        YugipediaApi api = new YugipediaApi();
-        String ruling = api.getRuling(rulings.get("Archfiend's Oath"));
+    public void whenGetArchfiendOathRuling_ThenReturnCorrectText() {
+        String ruling = api.getRuling("Archfiend's Oath");
         assertThat(ruling, containsString("Spell Economics"));
     }
 
     @Test
-    public void whenGetLevelDownRulingByCardName_ThenReturnCorrectText() {
-        YugipediaApi api = new YugipediaApi();
-        String ruling = api.getRuling(rulings.get("Level Down!?"));
+    public void whenGetLevelDownRuling_ThenReturnCorrectText() {
+        String ruling = api.getRuling("Level Down!?");
         assertThat(ruling, containsString("Armed Dragon"));
+    }
+
+    @Test
+    public void whenGetFiberJarTrivia_ThenReturnCorrectText() {
+        String ruling = api.getTrivia("Fiber Jar");
+        assertThat(ruling, containsString("Castle in the Sky"));
     }
 }

@@ -9,6 +9,8 @@ import com.chin.ygowikitool.entity.Booster;
 import com.chin.ygowikitool.entity.Card;
 
 public interface YugiohApi {
+    void initialize() throws IOException;
+
     Map<String, String> getCardMap(boolean isTcg) throws IOException, JSONException;
 
     Map<String, String> getBoosterMap(boolean isTcg) throws IOException, JSONException;
