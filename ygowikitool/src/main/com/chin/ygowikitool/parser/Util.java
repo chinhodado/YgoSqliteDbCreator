@@ -120,13 +120,27 @@ public class Util {
         }
     }
 
-    private static final Pattern IMG_URL_PATTERN =
+    private static final Pattern WIKIA_IMG_URL_PATTERN =
             Pattern.compile("http(s?)://static(\\d?)\\.wikia\\.nocookie\\.net/yugioh/images/./(.*?)/(.*?)/.*");
-    public static String getShortenedImageLink(String imgUrl) {
+    public static String getShortenedWikiaImageLink(String imgUrl) {
         try {
-            Matcher m = IMG_URL_PATTERN.matcher(imgUrl);
+            Matcher m = WIKIA_IMG_URL_PATTERN.matcher(imgUrl);
             m.find();
             String img = m.group(2) + m.group(3) + m.group(4);
+            return img;
+        }
+        catch (Exception e) {
+            return null;
+        }
+    }
+
+    private static final Pattern YUGIPEDIA_IMG_URL_PATTERN =
+            Pattern.compile("http(s?)://ms.yugipedia.com//thumb/./(.*?)/(.*?)/.*");
+    public static String getShortenedYugipediaImageLink(String imgUrl) {
+        try {
+            Matcher m = YUGIPEDIA_IMG_URL_PATTERN.matcher(imgUrl);
+            m.find();
+            String img = m.group(2) + m.group(3);
             return img;
         }
         catch (Exception e) {

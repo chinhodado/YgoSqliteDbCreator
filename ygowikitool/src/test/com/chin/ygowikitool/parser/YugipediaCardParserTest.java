@@ -72,7 +72,7 @@ public class YugipediaCardParserTest {
                 // ritual
                 { "Zera the Mant", "https://yugipedia.com/wiki/Zera_the_Mant",
                         "", "DARK", "Monster", "Fiend / Ritual", "8", "2800", "2300", "69123138",
-                        "", "", "", "", "\"Zera Ritual\"", "", "", "", "", "", "", "", "", X, "U", "U", "U", X, X},
+                        "", "", "", "", "\"Zera Ritual\"", "", "", "", "", "", "", "", "", X, "U", "U", "U", "88ZeratheMant-PP01-EN-SR-UE.jpg", X},
 
                 // synchro
                 { "Genex Ally Triarm", "https://yugipedia.com/wiki/Genex_Ally_Triarm",

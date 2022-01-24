@@ -32,9 +32,7 @@ public class YugipediaCardParser {
         try {
             Element imgElem = dom.getElementsByClass("cardtable-main_image-wrapper").first().getElementsByTag("img").first();
             String imgUrl = imgElem.attr("src");
-//            img = Util.getShortenedImageLink(imgUrl);
-            // TODO
-            img = imgUrl;
+            img = Util.getShortenedYugipediaImageLink(imgUrl);
         }
         catch (Exception e) {
             /* do nothing */

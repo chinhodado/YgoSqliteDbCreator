@@ -35,7 +35,7 @@ public class CardParser {
         try {
             Element imgAnchor = dom.getElementsByClass("cardtable-cardimage").first().getElementsByClass("image").first();
             String imgUrl = imgAnchor.attr("href");
-            img = Util.getShortenedImageLink(imgUrl);
+            img = Util.getShortenedWikiaImageLink(imgUrl);
         }
         catch (Exception e) {
             /* do nothing */

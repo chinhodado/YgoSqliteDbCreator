@@ -28,7 +28,7 @@ public class BoosterParser {
         booster.setEnReleaseDate(getEnglishReleaseDate());
         booster.setSkReleaseDate(getSouthKoreaReleaseDate());
         booster.setWorldwideReleaseDate(getWorldwideReleaseDate());
-        booster.setImgSrc(Util.getShortenedImageLink(getImageLink()));
+        booster.setImgSrc(Util.getShortenedWikiaImageLink(getImageLink()));
         return booster;
     }
 
