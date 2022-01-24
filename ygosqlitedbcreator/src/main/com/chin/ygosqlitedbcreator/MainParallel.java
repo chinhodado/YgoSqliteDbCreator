@@ -179,7 +179,7 @@ public class MainParallel {
 
         logLine("Processing card list");
         List<String> workList = cardList;
-        boolean trialMode = true;
+        boolean trialMode = false;
         if (trialMode) {
             workList = cardList.subList(0, 100);
         }

@@ -6,6 +6,7 @@ import static com.chin.ygowikitool.parser.Util.logLine;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -60,15 +61,15 @@ public class YugipediaApi implements YugiohApi {
     }
 
     public Map<String, String> getRulingMap() throws IOException, JSONException {
-        return getCategoryMap("Card_Rulings", "Card Rulings:", null, new HashMap<>());
+        return getCategoryMap("Card_Rulings", "Card Rulings:", null, new ConcurrentHashMap<>());
     }
 
     public Map<String, String> getTipMap() throws IOException, JSONException {
-        return getCategoryMap("Card_Tips", "Card Tips:", null, new HashMap<>());
+        return getCategoryMap("Card_Tips", "Card Tips:", null, new ConcurrentHashMap<>());
     }
 
     public Map<String, String> getTriviaMap() throws IOException, JSONException {
-        return getCategoryMap("Card_Trivia", "Card Trivia:", null, new HashMap<>());
+        return getCategoryMap("Card_Trivia", "Card Trivia:", null, new ConcurrentHashMap<>());
     }
 
     private Map<String, String> getCategoryMap(String categoryName, String titleCategorySubstring, String cmcontinue, Map<String, String> pageIdMap) throws JSONException, IOException {

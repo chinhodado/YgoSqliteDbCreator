@@ -135,12 +135,16 @@ public class Util {
     }
 
     private static final Pattern YUGIPEDIA_IMG_URL_PATTERN =
-            Pattern.compile("http(s?)://ms.yugipedia.com//thumb/./(.*?)/(.*?)/.*");
+            Pattern.compile("http(s?)://ms.yugipedia.com//(thumb/)?./(.+?)/(.*)");
     public static String getShortenedYugipediaImageLink(String imgUrl) {
         try {
             Matcher m = YUGIPEDIA_IMG_URL_PATTERN.matcher(imgUrl);
             m.find();
-            String img = m.group(2) + m.group(3);
+            String finalGroup = m.group(4);
+            if (finalGroup.contains("/")) {
+                finalGroup = finalGroup.split("/")[0];
+            }
+            String img = m.group(3) + finalGroup;
             return img;
         }
         catch (Exception e) {
