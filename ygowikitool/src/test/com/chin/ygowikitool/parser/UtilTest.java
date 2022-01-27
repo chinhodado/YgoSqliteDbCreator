@@ -16,4 +16,26 @@ public class UtilTest {
         shortened = Util.getShortenedYugipediaImageLink(original);
         assertThat(shortened, is("deMountainWarrior-SB-JP-C.jpg"));
     }
+
+    @Test
+    public void whenGetFullYugipediaImageLink_ThenReturnCorrectValue() {
+        String shortened = "5aGranmargtheRockMonarch-SBCB-EN-C-1E.png";
+        String original = Util.getFullYugipediaImageLink(shortened);
+        assertThat(original, is("https://ms.yugipedia.com//5/5a/GranmargtheRockMonarch-SBCB-EN-C-1E.png"));
+
+        shortened = "deMountainWarrior-SB-JP-C.jpg";
+        original = Util.getFullYugipediaImageLink(shortened);
+        assertThat(original, is("https://ms.yugipedia.com//d/de/MountainWarrior-SB-JP-C.jpg"));
+    }
+
+    @Test
+    public void whenGetScaledYugipediaImageLink_ThenReturnCorrectValue() {
+        String original = "https://ms.yugipedia.com//thumb/5/5a/GranmargtheRockMonarch-SBCB-EN-C-1E.png/300px-GranmargtheRockMonarch-SBCB-EN-C-1E.png";
+        String scaled = Util.getScaledYugipediaImageLink(original, 500);
+        assertThat(scaled, is("https://ms.yugipedia.com//thumb/5/5a/GranmargtheRockMonarch-SBCB-EN-C-1E.png/500px-GranmargtheRockMonarch-SBCB-EN-C-1E.png"));
+
+        original = "https://ms.yugipedia.com//d/de/MountainWarrior-SB-JP-C.jpg";
+        scaled = Util.getScaledYugipediaImageLink(original, 500);
+        assertThat(scaled, is("https://ms.yugipedia.com//thumb/d/de/MountainWarrior-SB-JP-C.jpg/500px-MountainWarrior-SB-JP-C.jpg"));
+    }
 }

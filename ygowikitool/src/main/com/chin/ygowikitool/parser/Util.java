@@ -152,6 +152,46 @@ public class Util {
         }
     }
 
+    public static String getScaledYugipediaImageLink (String originalLink, int newWidth) {
+        boolean isThumbLink = originalLink.contains("px-");
+
+        // trim off everything after the first file name
+        String link = originalLink;
+        if (link.contains(".png")) {
+            link = link.substring(0, link.indexOf(".png") + 4);
+        }
+        else if (link.contains(".jpg")) {
+            link = link.substring(0, link.indexOf(".jpg") + 4);
+        }
+        else {
+            return link; // hey, unknown format or something
+        }
+
+        // get the original image name
+        int lastSlash = link.lastIndexOf("/");
+        String fileName = link.substring(lastSlash + 1);
+
+
+        // the new scaled image
+        String newScaledName = newWidth + "px-" + fileName;
+
+        // original image link with the slash
+
+        // complete new link
+        String newScaledLink = link + "/" + newScaledName;
+        if (!isThumbLink) {
+            // some additional work to turn a normal image to a thumb/scaled one
+            newScaledLink = newScaledLink.replace(".com//", ".com//thumb/");
+        }
+        return newScaledLink;
+    }
+
+    public static String getFullYugipediaImageLink(String shortenedLink) {
+        return "https://ms.yugipedia.com//" +
+                shortenedLink.charAt(0) + "/" + shortenedLink.charAt(0) + shortenedLink.charAt(1) +
+                "/" + shortenedLink.substring(2);
+    }
+
     public static String jsoupGet(String url) throws IOException {
         String content = Jsoup.connect(url)
                 .userAgent("Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36")
