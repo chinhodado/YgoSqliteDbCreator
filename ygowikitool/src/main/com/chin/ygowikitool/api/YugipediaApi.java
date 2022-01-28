@@ -1,7 +1,7 @@
 package com.chin.ygowikitool.api;
 
-import static com.chin.ygowikitool.parser.Util.jsoupGet;
-import static com.chin.ygowikitool.parser.Util.logLine;
+import static com.chin.ygowikitool.parser.YugiohWikiUtil.jsoupGet;
+import static com.chin.ygowikitool.parser.YugiohWikiUtil.logLine;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -17,7 +17,7 @@ import org.jsoup.nodes.Element;
 
 import com.chin.ygowikitool.entity.Booster;
 import com.chin.ygowikitool.entity.Card;
-import com.chin.ygowikitool.parser.Util;
+import com.chin.ygowikitool.parser.YugiohWikiUtil;
 import com.chin.ygowikitool.parser.YugipediaCardParser;
 
 public class YugipediaApi implements YugiohApi {
@@ -48,6 +48,32 @@ public class YugipediaApi implements YugiohApi {
         }
     }
 
+    public String getCardTipsByCardName(String cardName) {
+        String encodedCardName = getEncodedCardName(cardName);
+        String url = "https://yugipedia.com/wiki/Card_Tips:" + encodedCardName;
+
+        try {
+            Document dom = Jsoup.parse(jsoupGet(url));
+            return getCardInfoGeneric(dom, false);
+        }
+        catch (Exception e) {
+            return null;
+        }
+    }
+
+    public String getCardTriviaByCardName(String cardName) {
+        String encodedCardName = getEncodedCardName(cardName);
+        String url = "https://yugipedia.com/wiki/Card_Trivia:" + encodedCardName;
+
+        try {
+            Document dom = Jsoup.parse(jsoupGet(url));
+            return getCardInfoGeneric(dom, false);
+        }
+        catch (Exception e) {
+            return null;
+        }
+    }
+
     public String getEncodedCardName(String cardName) {
         return cardName.replaceAll("%", "%25")
                        .replaceAll("'", "%27")
@@ -57,7 +83,7 @@ public class YugipediaApi implements YugiohApi {
 
     private String getCardInfoGeneric(Document dom, boolean isTipsPage) {
         Element content = dom.getElementById("mw-content-text");
-        return Util.getCleanedHtml(content, isTipsPage, false);
+        return YugiohWikiUtil.getCleanedHtml(content, isTipsPage, false);
     }
 
     public Map<String, String> getRulingMap() throws IOException, JSONException {
@@ -153,8 +179,47 @@ public class YugipediaApi implements YugiohApi {
     }
 
     @Override
-    public Map<String, String> getBoosterMap(boolean isTcg) throws JSONException {
-        return new HashMap<>();
+    public Map<String, String> getBoosterMap(boolean isTcg) throws JSONException, IOException {
+        return getBoosterMap(null, new HashMap<>(), isTcg);
+    }
+
+    private Map<String, String> getBoosterMap(String cmcontinue, Map<String, String> boosterMap, boolean isTcg) throws JSONException, IOException {
+        String url;
+        if (isTcg) {
+            url = "https://yugipedia.com/api.php?action=query&format=json&list=categorymembers&cmtitle=Category:TCG_Booster_Packs&cmlimit=500";
+        }
+        else {
+            url = "https://yugipedia.com/api.php?action=query&format=json&list=categorymembers&cmtitle=Category:OCG_Booster_Packs&cmlimit=500";
+        }
+
+        if (cmcontinue != null) {
+            url = url + "&cmcontinue=" + cmcontinue;
+        }
+        String jsonString = jsoupGet(url);
+
+        JSONObject myJSON = new JSONObject(jsonString);
+        JSONArray myArray = myJSON.getJSONObject("query").getJSONArray("categorymembers");
+        for (int i = 0; i < myArray.length(); i++) {
+            JSONObject articleInfo = myArray.getJSONObject(i);
+            String title = articleInfo.getString("title");
+
+            if (title.trim().endsWith("(temp)")) {
+                continue;
+            }
+
+            if (!boosterMap.containsKey(title)) {
+                String pageid = articleInfo.getLong("pageid") + "";
+                boosterMap.put(title, pageid);
+            }
+        }
+
+        if (myJSON.has("continue")) {
+            String nextCmcontinue = myJSON.getJSONObject("continue").getString("cmcontinue");
+            return getBoosterMap(nextCmcontinue, boosterMap, isTcg);
+        }
+        else {
+            return boosterMap;
+        }
     }
 
     @Override

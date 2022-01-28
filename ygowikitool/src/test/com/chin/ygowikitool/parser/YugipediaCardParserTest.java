@@ -1,6 +1,6 @@
 package com.chin.ygowikitool.parser;
 
-import static com.chin.ygowikitool.parser.Util.jsoupGet;
+import static com.chin.ygowikitool.parser.YugiohWikiUtil.jsoupGet;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;

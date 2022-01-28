@@ -17,7 +17,7 @@ public class BoosterParser {
     public BoosterParser(String boosterName, Document dom) {
         this.boosterName = boosterName;
         Element elem = dom.getElementById("mw-content-text");
-        Util.removeSupTag(elem);
+        YugiohWikiUtil.removeSupTag(elem);
         this.dom = elem;
     }
 
@@ -28,7 +28,7 @@ public class BoosterParser {
         booster.setEnReleaseDate(getEnglishReleaseDate());
         booster.setSkReleaseDate(getSouthKoreaReleaseDate());
         booster.setWorldwideReleaseDate(getWorldwideReleaseDate());
-        booster.setImgSrc(Util.getShortenedWikiaImageLink(getImageLink()));
+        booster.setImgSrc(YugiohWikiUtil.getShortenedWikiaImageLink(getImageLink()));
         return booster;
     }
 

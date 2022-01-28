@@ -17,7 +17,7 @@ import java.util.regex.Pattern;
 /**
  * Created by Chin on 13-May-17.
  */
-public class Util {
+public class YugiohWikiUtil {
     public static String getCleanedHtml(Element content, boolean isTipPage, boolean rawText) {
         Elements navboxes = content.select("table.navbox");
         if (!navboxes.isEmpty()) {navboxes.first().remove();} // remove the navigation box

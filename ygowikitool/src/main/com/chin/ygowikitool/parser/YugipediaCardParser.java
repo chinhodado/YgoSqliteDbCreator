@@ -15,7 +15,7 @@ public class YugipediaCardParser {
     public YugipediaCardParser(String cardName, Element dom) {
         this.cardName = cardName;
         Element elem = dom.getElementById("mw-content-text");
-        Util.removeSupTag(elem);
+        YugiohWikiUtil.removeSupTag(elem);
         this.dom = elem;
     }
 
@@ -32,7 +32,7 @@ public class YugipediaCardParser {
         try {
             Element imgElem = dom.getElementsByClass("cardtable-main_image-wrapper").first().getElementsByTag("img").first();
             String imgUrl = imgElem.attr("src");
-            img = Util.getShortenedYugipediaImageLink(imgUrl);
+            img = YugiohWikiUtil.getShortenedYugipediaImageLink(imgUrl);
         }
         catch (Exception e) {
             /* do nothing */
@@ -188,7 +188,7 @@ public class YugipediaCardParser {
 
     private String getCardLore(Element dom) {
         Element effectBox = dom.getElementsByClass("lore").first();
-        String effect = Util.getCleanedHtml(effectBox, false, false);
+        String effect = YugiohWikiUtil.getCleanedHtml(effectBox, false, false);
 
         // turn <dl> into <p> and <dt> into <b>
         effect = effect.replace("<dl", "<p").replace("dl>", "p>").replace("<dt", "<b").replace("dt>", "b>");

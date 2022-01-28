@@ -9,14 +9,14 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import com.chin.ygowikitool.parser.BoosterParser;
-import com.chin.ygowikitool.parser.CardParser;
-import com.chin.ygowikitool.parser.Util;
+import com.chin.ygowikitool.parser.YugiohWikiaCardParser;
+import com.chin.ygowikitool.parser.YugiohWikiUtil;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.chin.ygowikitool.parser.Util.jsoupGet;
+import static com.chin.ygowikitool.parser.YugiohWikiUtil.jsoupGet;
 
 public class YugiohWikiaApi implements YugiohApi {
     @Override
@@ -126,7 +126,7 @@ public class YugiohWikiaApi implements YugiohApi {
     public Card getCard(String cardName, String cardLink) throws IOException {
         String cardUrl = "https://yugioh.wikia.com" + cardLink;
         Document mainDom = Jsoup.parse(jsoupGet(cardUrl));
-        CardParser parser = new CardParser(cardName, mainDom);
+        YugiohWikiaCardParser parser = new YugiohWikiaCardParser(cardName, mainDom);
         Card card = parser.parse();
 
         return card;
@@ -167,6 +167,6 @@ public class YugiohWikiaApi implements YugiohApi {
 
     private String getCardInfoGeneric(Document dom, boolean isTipsPage) {
         Element content = dom.getElementById("mw-content-text");
-        return Util.getCleanedHtml(content, isTipsPage, false);
+        return YugiohWikiUtil.getCleanedHtml(content, isTipsPage, false);
     }
 }

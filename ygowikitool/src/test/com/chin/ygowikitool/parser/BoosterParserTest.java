@@ -15,7 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
-import static com.chin.ygowikitool.parser.Util.jsoupGet;
+import static com.chin.ygowikitool.parser.YugiohWikiUtil.jsoupGet;
 
 /**
  * Created by Chin on 22-May-17.

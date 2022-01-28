@@ -15,14 +15,14 @@ import java.util.*;
 
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.junit.Assert.assertEquals;
-import static com.chin.ygowikitool.parser.Util.jsoupGet;
+import static com.chin.ygowikitool.parser.YugiohWikiUtil.jsoupGet;
 import static org.junit.Assert.assertThat;
 
 /**
  * Created by Chin on 13-May-17.
  */
 @RunWith(Parameterized.class)
-public class CardParserTest {
+public class YugiohWikiaCardParserTest {
     // for performance reason
     private static Map<String, Card> cardCache = new HashMap<>();
     private Card card;
@@ -34,7 +34,7 @@ public class CardParserTest {
         }
         else {
             Document mainDom = Jsoup.parse(jsoupGet(url));
-            CardParser parser = new CardParser(name, mainDom);
+            YugiohWikiaCardParser parser = new YugiohWikiaCardParser(name, mainDom);
             card = parser.parse();
             cardCache.put(name, card);
         }

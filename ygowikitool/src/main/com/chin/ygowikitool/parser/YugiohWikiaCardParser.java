@@ -11,14 +11,14 @@ import java.util.List;
 /**
  * Created by Chin on 13-May-17.
  */
-public class CardParser {
+public class YugiohWikiaCardParser {
     private Element dom;
     private String cardName;
 
-    public CardParser(String cardName, Element dom) {
+    public YugiohWikiaCardParser(String cardName, Element dom) {
         this.cardName = cardName;
         Element elem = dom.getElementById("mw-content-text");
-        Util.removeSupTag(elem);
+        YugiohWikiUtil.removeSupTag(elem);
         this.dom = elem;
     }
 
@@ -35,14 +35,14 @@ public class CardParser {
         try {
             Element imgAnchor = dom.getElementsByClass("cardtable-cardimage").first().getElementsByClass("image").first();
             String imgUrl = imgAnchor.attr("href");
-            img = Util.getShortenedWikiaImageLink(imgUrl);
+            img = YugiohWikiUtil.getShortenedWikiaImageLink(imgUrl);
         }
         catch (Exception e) {
             /* do nothing */
         }
 
         if (!rows.first().getElementsByClass("cardtablerowheader").first().text().equals("English")) {
-            Util.logLine("First row in table for " + cardName + " is not English name!");
+            YugiohWikiUtil.logLine("First row in table for " + cardName + " is not English name!");
         }
 
         String inPageName = rows.first().getElementsByClass("cardtablerowdata").first().text();
@@ -209,7 +209,7 @@ public class CardParser {
 
     private String getCardLore(Element dom) {
         Element effectBox = dom.getElementsByClass("cardtablespanrow").first().getElementsByClass("navbox-list").first();
-        String effect = Util.getCleanedHtml(effectBox, false, false);
+        String effect = YugiohWikiUtil.getCleanedHtml(effectBox, false, false);
 
         // turn <dl> into <p> and <dt> into <b>
         effect = effect.replace("<dl", "<p").replace("dl>", "p>").replace("<dt", "<b").replace("dt>", "b>");
