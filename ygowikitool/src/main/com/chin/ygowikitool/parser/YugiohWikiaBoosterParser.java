@@ -10,9 +10,9 @@ import org.jsoup.select.Elements;
  * <p>
  * Created by Chin on 06-Feb-17.
  */
-public class YugiohWikiaBoosterParser {
-    private Element dom;
-    private String boosterName;
+public class YugiohWikiaBoosterParser implements BoosterParser {
+    private final Element dom;
+    private final String boosterName;
 
     public YugiohWikiaBoosterParser(String boosterName, Document dom) {
         this.boosterName = boosterName;
@@ -21,6 +21,7 @@ public class YugiohWikiaBoosterParser {
         this.dom = elem;
     }
 
+    @Override
     public Booster parse() {
         Booster booster = new Booster();
         booster.setBoosterName(boosterName);
