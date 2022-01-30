@@ -8,7 +8,7 @@ import org.json.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-import com.chin.ygowikitool.parser.BoosterParser;
+import com.chin.ygowikitool.parser.YugiohWikiaBoosterParser;
 import com.chin.ygowikitool.parser.YugiohWikiaCardParser;
 import com.chin.ygowikitool.parser.YugiohWikiUtil;
 
@@ -116,7 +116,7 @@ public class YugiohWikiaApi implements YugiohApi {
     public Booster getBooster(String boosterName, String boosterLink) throws IOException {
         String boosterUrl = "https://yugioh.wikia.com" + boosterLink;
         Document mainDom = Jsoup.parse(jsoupGet(boosterUrl));
-        BoosterParser parser = new BoosterParser(boosterName, mainDom);
+        YugiohWikiaBoosterParser parser = new YugiohWikiaBoosterParser(boosterName, mainDom);
         Booster booster = parser.parse();
 
         return booster;

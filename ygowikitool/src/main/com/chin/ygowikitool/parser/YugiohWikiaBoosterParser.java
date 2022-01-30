@@ -10,11 +10,11 @@ import org.jsoup.select.Elements;
  * <p>
  * Created by Chin on 06-Feb-17.
  */
-public class BoosterParser {
+public class YugiohWikiaBoosterParser {
     private Element dom;
     private String boosterName;
 
-    public BoosterParser(String boosterName, Document dom) {
+    public YugiohWikiaBoosterParser(String boosterName, Document dom) {
         this.boosterName = boosterName;
         Element elem = dom.getElementById("mw-content-text");
         YugiohWikiUtil.removeSupTag(elem);

@@ -21,7 +21,7 @@ import static com.chin.ygowikitool.parser.YugiohWikiUtil.jsoupGet;
  * Created by Chin on 22-May-17.
  */
 @RunWith(Parameterized.class)
-public class BoosterParserTest {
+public class YugiohWikiaBoosterParserTest {
     // for performance reason
     private static Map<String, Booster> boosterCache = new HashMap<>();
     private Booster booster;
@@ -41,7 +41,7 @@ public class BoosterParserTest {
         }
         else {
             Document mainDom = Jsoup.parse(jsoupGet(url));
-            BoosterParser parser = new BoosterParser(name, mainDom);
+            YugiohWikiaBoosterParser parser = new YugiohWikiaBoosterParser(name, mainDom);
             booster = parser.parse();
             boosterCache.put(name, booster);
         }
