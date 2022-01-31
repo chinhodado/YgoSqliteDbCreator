@@ -9,7 +9,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class YugipediaBoosterParser implements BoosterParser {
@@ -124,7 +124,7 @@ public class YugipediaBoosterParser implements BoosterParser {
     }
 
     private Map<String, Card> getCardMap() {
-        Map<String, Card> cards = new HashMap<>();
+        Map<String, Card> cards = new LinkedHashMap<>(); // retain the order
         try {
             Elements rows = dom.getElementsByClass("wikitable").first()
                     .getElementsByTag("tbody").first()
