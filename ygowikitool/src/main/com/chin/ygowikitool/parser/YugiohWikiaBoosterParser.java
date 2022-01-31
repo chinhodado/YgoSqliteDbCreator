@@ -29,7 +29,7 @@ public class YugiohWikiaBoosterParser implements BoosterParser {
         booster.setEnReleaseDate(getEnglishReleaseDate());
         booster.setSkReleaseDate(getSouthKoreaReleaseDate());
         booster.setWorldwideReleaseDate(getWorldwideReleaseDate());
-        booster.setImgSrc(YugiohWikiUtil.getShortenedWikiaImageLink(getImageLink()));
+        booster.setShortenedImgSrc(YugiohWikiUtil.getShortenedWikiaImageLink(getImageLink()));
         return booster;
     }
 

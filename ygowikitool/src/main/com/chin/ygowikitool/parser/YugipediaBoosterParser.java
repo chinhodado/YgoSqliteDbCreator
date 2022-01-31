@@ -1,10 +1,16 @@
 package com.chin.ygowikitool.parser;
 
+import static com.chin.ygowikitool.parser.YugiohWikiUtil.logLine;
+
 import com.chin.ygowikitool.entity.Booster;
+import com.chin.ygowikitool.entity.Card;
 
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class YugipediaBoosterParser implements BoosterParser {
     private final Element dom;
@@ -25,7 +31,14 @@ public class YugipediaBoosterParser implements BoosterParser {
         booster.setEnReleaseDate(getEnglishReleaseDate());
         booster.setSkReleaseDate(getSouthKoreaReleaseDate());
         booster.setWorldwideReleaseDate(getWorldwideReleaseDate());
-        booster.setImgSrc(YugiohWikiUtil.getShortenedYugipediaImageLink(getImageLink()));
+        String imageLink = getImageLink();
+        booster.setFullImgSrc(imageLink);
+        booster.setShortenedImgSrc(YugiohWikiUtil.getShortenedYugipediaImageLink(imageLink));
+
+        booster.setIntroText(getIntroText());
+        booster.setFeatureText(getFeatureText());
+        booster.setCardMap(getCardMap());
+
         return booster;
     }
 
@@ -90,5 +103,71 @@ public class YugipediaBoosterParser implements BoosterParser {
         catch (Exception e) {
             return null;
         }
+    }
+
+    private String getIntroText() {
+        try {
+            return dom.select(".mw-parser-output > p").first().text();
+        }
+        catch (Exception e) {
+            return null;
+        }
+    }
+
+    private String getFeatureText() {
+        try {
+            return dom.select(".mw-parser-output > ul").first().text();
+        }
+        catch (Exception e) {
+            return null;
+        }
+    }
+
+    private Map<String, Card> getCardMap() {
+        Map<String, Card> cards = new HashMap<>();
+        try {
+            Elements rows = dom.getElementsByClass("wikitable").first()
+                    .getElementsByTag("tbody").first()
+                    .getElementsByTag("tr");
+            for (Element row : rows) {
+                try {
+                    Elements cells = row.getElementsByTag("td");
+                    String setNumber = cells.get(0).text();
+                    String cardName = cells.get(1).text();
+
+                    if (cardName != null && cardName.length() > 2 && cardName.startsWith("\"") && cardName.endsWith("\"")) {
+                        cardName = cardName.substring(1, cardName.length() - 1);
+                    }
+
+                    String rarity = "", category = "";
+                    if (cells.size() == 4) {
+                        // table without Japanese name column
+                        rarity = cells.get(2).text();
+                        category = cells.get(3).text();
+                    }
+                    else if (cells.size() == 5) {
+                        // table with Japanese name column
+                        // String jpName = cells.get(2).text();
+                        rarity = cells.get(3).text();
+                        category = cells.get(4).text();
+                    }
+
+                    Card card = new Card();
+                    card.setName(cardName);
+                    card.setSetNumber(setNumber);
+                    card.setRarity(rarity);
+                    card.setCategory(category);
+                    cards.put(cardName, card);
+                }
+                catch (Exception e) {
+                    // do nothing
+                }
+            }
+        }
+        catch (Exception e) {
+            logLine("Unable to get card list for booster: " + boosterName);
+        }
+
+        return cards;
     }
 }

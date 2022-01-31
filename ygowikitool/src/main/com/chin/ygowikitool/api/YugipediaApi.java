@@ -18,6 +18,8 @@ import org.jsoup.nodes.Element;
 import com.chin.ygowikitool.entity.Booster;
 import com.chin.ygowikitool.entity.Card;
 import com.chin.ygowikitool.parser.YugiohWikiUtil;
+import com.chin.ygowikitool.parser.YugiohWikiaBoosterParser;
+import com.chin.ygowikitool.parser.YugipediaBoosterParser;
 import com.chin.ygowikitool.parser.YugipediaCardParser;
 
 public class YugipediaApi implements YugiohApi {
@@ -223,8 +225,13 @@ public class YugipediaApi implements YugiohApi {
     }
 
     @Override
-    public Booster getBooster(String boosterName, String boosterLink) throws IOException {
-        return null;
+    public Booster getBooster(String boosterName, String pageid) throws IOException {
+        String boosterUrl = "https://yugipedia.com/?curid=" + pageid;
+        Document mainDom = Jsoup.parse(jsoupGet(boosterUrl));
+        YugipediaBoosterParser parser = new YugipediaBoosterParser(boosterName, mainDom);
+        Booster booster = parser.parse();
+
+        return booster;
     }
 
     @Override

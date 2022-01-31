@@ -80,6 +80,6 @@ public class YugipediaBoosterParserTest {
 
     @Test
     public void parseImage() {
-        assertTrue(booster.getImgSrc().contains(img));
+        assertTrue(booster.getShortenedImgSrc().contains(img));
     }
 }

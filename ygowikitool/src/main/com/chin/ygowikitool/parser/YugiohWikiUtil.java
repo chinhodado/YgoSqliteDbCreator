@@ -187,6 +187,9 @@ public class YugiohWikiUtil {
     }
 
     public static String getFullYugipediaImageLink(String shortenedLink) {
+        if (shortenedLink == null || "".equals(shortenedLink)) {
+            return shortenedLink;
+        }
         return "https://ms.yugipedia.com//" +
                 shortenedLink.charAt(0) + "/" + shortenedLink.charAt(0) + shortenedLink.charAt(1) +
                 "/" + shortenedLink.substring(2);

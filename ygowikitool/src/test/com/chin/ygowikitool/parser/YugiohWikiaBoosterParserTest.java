@@ -79,6 +79,6 @@ public class YugiohWikiaBoosterParserTest {
 
     @Test
     public void parseImage() {
-        assertEquals(booster.getImgSrc().contains(img), true);
+        assertEquals(booster.getShortenedImgSrc().contains(img), true);
     }
 }

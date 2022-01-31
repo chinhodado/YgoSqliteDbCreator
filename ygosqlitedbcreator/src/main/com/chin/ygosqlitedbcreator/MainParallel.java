@@ -1,11 +1,12 @@
 package com.chin.ygosqlitedbcreator;
 
-import static com.chin.ygowikitool.parser.Util.logLine;
+import static com.chin.ygowikitool.parser.YugiohWikiUtil.logLine;
 
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.io.IOException;
+import java.net.SocketTimeoutException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -181,7 +182,7 @@ public class MainParallel {
         List<String> workList = cardList;
         boolean trialMode = false;
         if (trialMode) {
-            workList = cardList.subList(0, 100);
+            workList = cardList.subList(0, 10);
         }
         int totalCards = cardList.size();
         while (!workList.isEmpty()) {
@@ -325,7 +326,12 @@ public class MainParallel {
                 for (String card : part) {
                     try {
                         workFunction.processItem(card, doneCounter);
-                    } catch (Exception e) {
+                    }
+                    catch (SocketTimeoutException e) {
+                        System.out.println("Error with " + card + ": " + e.getMessage());
+                        errorList.add(card);
+                    }
+                    catch (Exception e) {
                         System.out.println("Error with " + card);
                         e.printStackTrace();
                         errorList.add(card);
@@ -396,6 +402,11 @@ public class MainParallel {
     }
 
     private static void processBooster(String boosterName, AtomicInteger doneCounter) throws IOException, SQLException {
+        // ignore the aggregate articles
+        if (boosterName.equals("Astral Pack") || boosterName.equals("OTS Tournament Pack")) {
+            return;
+        }
+
         String boosterLink = boosterLinkTable.get(boosterName);
         if (ENABLE_VERBOSE_LOG) System.out.println("Fetching " + boosterName + "'s general info");
         Booster booster = YUGIOH_API.getBooster(boosterName, boosterLink);
@@ -405,7 +416,7 @@ public class MainParallel {
         psBoosterInsert.setString(3, booster.getJpReleaseDate());
         psBoosterInsert.setString(4, booster.getSkReleaseDate());
         psBoosterInsert.setString(5, booster.getWorldwideReleaseDate());
-        psBoosterInsert.setString(6, booster.getImgSrc());
+        psBoosterInsert.setString(6, booster.getShortenedImgSrc());
 
         psBoosterInsert.executeUpdate();
         doneCounter.incrementAndGet();
