@@ -2,7 +2,6 @@ package com.chin.ygowikitool.parser;
 
 import static com.chin.ygowikitool.parser.YugiohWikiUtil.jsoupGet;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
@@ -34,6 +33,8 @@ public class YugipediaBoosterParserTest {
     @Parameterized.Parameter(4) public String skReleaseDate;
     @Parameterized.Parameter(5) public String worldwideReleaseDate;
     @Parameterized.Parameter(6) public String img;
+    @Parameterized.Parameter(7) public String intro;
+    @Parameterized.Parameter(8) public String features;
 
     @Before
     public void setUp() throws IOException {
@@ -52,9 +53,10 @@ public class YugipediaBoosterParserTest {
     @Parameterized.Parameters(name = "{0}")
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][] {
-                { "Hidden Arsenal", "https://yugipedia.com/wiki/Hidden_Arsenal", "November 10, 2009", null, "May 25, 2010", null, "HA01" },
-                { "Premium Pack 10", "https://yugipedia.com/wiki/Premium_Pack_10", null, "March 8, 2007", null, null, "PP10" },
-                { "Invasion of Chaos", "https://yugipedia.com/wiki/Invasion_of_Chaos", "March 1, 2004", null, "June 28, 2005", "June 25, 2007", "IOC" },
+                { "Hidden Arsenal", "https://yugipedia.com/wiki/Hidden_Arsenal", "November 10, 2009", null, "May 25, 2010", null, "HA01", X, X },
+                { "Premium Pack 10", "https://yugipedia.com/wiki/Premium_Pack_10", null, "March 8, 2007", null, null, "PP10", X, X },
+                { "Invasion of Chaos", "https://yugipedia.com/wiki/Invasion_of_Chaos", "March 1, 2004", null, "June 28, 2005", "June 25, 2007", "IOC", X, X },
+                { "Battle of Chaos", "https://yugipedia.com/wiki/Battle_of_Chaos", "February 11, 2022", "October 16, 2021", "January 19, 2022", null, "BACH", "7th Core Booster", "Swordsoul"}
         });
     }
 
@@ -81,5 +83,21 @@ public class YugipediaBoosterParserTest {
     @Test
     public void parseImage() {
         assertTrue(booster.getShortenedImgSrc().contains(img));
+    }
+
+    @Test
+    public void parseIntroText() {
+        if (intro.equals(X)) {
+            return;
+        }
+        assertTrue(booster.getIntroText().contains(intro));
+    }
+
+    @Test
+    public void parseFeatureText() {
+        if (intro.equals(X)) {
+            return;
+        }
+        assertTrue(booster.getFeatureText().contains(features));
     }
 }

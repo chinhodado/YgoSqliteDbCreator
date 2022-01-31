@@ -1,6 +1,12 @@
 package com.chin.ygowikitool.parser;
 
+import static com.chin.ygowikitool.parser.YugiohWikiUtil.jsoupGet;
+import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
+
 import com.chin.ygowikitool.entity.Booster;
+
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.junit.Before;
@@ -13,9 +19,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-
-import static org.junit.Assert.assertEquals;
-import static com.chin.ygowikitool.parser.YugiohWikiUtil.jsoupGet;
 
 /**
  * Created by Chin on 22-May-17.
@@ -59,26 +62,26 @@ public class YugiohWikiaBoosterParserTest {
 
     @Test
     public void parseEnReleaseDate() {
-        assertEquals(booster.getEnReleaseDate(), enReleaseDate);
+        assertThat(booster.getEnReleaseDate(), is(enReleaseDate));
     }
 
     @Test
     public void parseJpReleaseDate() {
-        assertEquals(booster.getJpReleaseDate(), jpReleaseDate);
+        assertThat(booster.getJpReleaseDate(), is(jpReleaseDate));
     }
 
     @Test
     public void parseSkReleaseDate() {
-        assertEquals(booster.getSkReleaseDate(), skReleaseDate);
+        assertThat(booster.getSkReleaseDate(), is(skReleaseDate));
     }
 
     @Test
     public void parseWorldwideReleaseDate() {
-        assertEquals(booster.getWorldwideReleaseDate(), worldwideReleaseDate);
+        assertThat(booster.getWorldwideReleaseDate(), is(worldwideReleaseDate));
     }
 
     @Test
     public void parseImage() {
-        assertEquals(booster.getShortenedImgSrc().contains(img), true);
+        assertTrue(booster.getShortenedImgSrc().contains(img));
     }
 }
