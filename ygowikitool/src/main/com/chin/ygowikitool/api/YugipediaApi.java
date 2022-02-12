@@ -3,10 +3,11 @@ package com.chin.ygowikitool.api;
 import static com.chin.ygowikitool.parser.YugiohWikiUtil.jsoupGet;
 import static com.chin.ygowikitool.parser.YugiohWikiUtil.logLine;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import com.chin.ygowikitool.entity.Booster;
+import com.chin.ygowikitool.entity.Card;
+import com.chin.ygowikitool.parser.YugiohWikiUtil;
+import com.chin.ygowikitool.parser.YugipediaBoosterParser;
+import com.chin.ygowikitool.parser.YugipediaCardParser;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -15,12 +16,10 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
-import com.chin.ygowikitool.entity.Booster;
-import com.chin.ygowikitool.entity.Card;
-import com.chin.ygowikitool.parser.YugiohWikiUtil;
-import com.chin.ygowikitool.parser.YugiohWikiaBoosterParser;
-import com.chin.ygowikitool.parser.YugipediaBoosterParser;
-import com.chin.ygowikitool.parser.YugipediaCardParser;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class YugipediaApi implements YugiohApi {
     private Map<String, String> yugipediaRulingMap;
@@ -56,7 +55,7 @@ public class YugipediaApi implements YugiohApi {
 
         try {
             Document dom = Jsoup.parse(jsoupGet(url));
-            return getCardInfoGeneric(dom, false);
+            return getCardInfoGeneric(dom, true);
         }
         catch (Exception e) {
             return null;
@@ -247,25 +246,25 @@ public class YugipediaApi implements YugiohApi {
     @Override
     public String getRuling(String cardName) {
         String pageid = yugipediaRulingMap.get(cardName);
-        return getPageContentGeneric(pageid);
+        return getPageContentGeneric(pageid, false);
     }
 
     @Override
     public String getTips(String cardName) {
         String pageid = yugipediaTipMap.get(cardName);
-        return getPageContentGeneric(pageid);
+        return getPageContentGeneric(pageid, true);
     }
 
     @Override
     public String getTrivia(String cardName) {
         String pageid = yugipediaTriviaMap.get(cardName);
-        return getPageContentGeneric(pageid);
+        return getPageContentGeneric(pageid, false);
     }
 
-    private String getPageContentGeneric(String pageid) {
+    private String getPageContentGeneric(String pageid, boolean isTipPage) {
         try {
             Document dom = Jsoup.parse(jsoupGet("https://yugipedia.com/?curid=" + pageid));
-            return getCardInfoGeneric(dom, false);
+            return getCardInfoGeneric(dom, isTipPage);
         }
         catch (Exception e) {
             /* do nothing */

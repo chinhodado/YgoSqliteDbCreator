@@ -24,6 +24,7 @@ public class YugiohWikiUtil {
 
         content.select(".mobile-show").remove();         // remove the card header in yugipedia
         content.select(".nomobile").remove();            // remove the navigation box in yugipedia
+        content.select(".mw-editsection").remove();      // remove the [edit] link in yugipedia
         content.select("script").remove();               // remove <script> tags
         content.select("noscript").remove();             // remove <noscript> tags
         content.select("#toc").remove();                 // remove the table of content
@@ -44,7 +45,7 @@ public class YugiohWikiUtil {
         if (isTipPage) {
             // remove the "lists" tables
             boolean foundListsHeader = false;
-            Elements children = content.select("#mw-content-text").first().children();
+            Elements children = content.select(".mw-parser-output").first().children();
             for (Element child : children) {
                 if ((child.tagName().equals("h2") || child.tagName().equals("h3")) && child.text().contains("List")) {
                     foundListsHeader = true;
